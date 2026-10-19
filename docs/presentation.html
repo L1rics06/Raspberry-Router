@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiAgent · 项目介绍 — 基于 AI Agent 的树莓派物联网控制平台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0f1e; --ink: #e8ecf8; --muted: #8b93ad; --line: #232e4d;
+    --accent: #22d3ee;
+    --ma: #f472b6;   /* 模块 A 界面 */
+    --mb: #38bdf8;   /* 模块 B 通信 */
+    --mc: #a78bfa;   /* 模块 C Agent */
+    --md: #4ade80;   /* 模块 D 设备 */
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); overflow: hidden;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif; }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(34, 211, 238, .07), transparent 60%),
+      radial-gradient(900px 600px at 95% 110%, rgba(167, 139, 250, .08), transparent 60%); }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px;
+    transform: translate(-50%, -50%) scale(1); transform-origin: center; }
+  #stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 64px 64px; }
+
+  /* ---------- 幻灯片基座 ---------- */
+  .slide { position: absolute; inset: 0; padding: 60px 84px 66px; display: flex; flex-direction: column;
+    opacity: 0; visibility: hidden; transition: opacity .45s ease; }
+  .slide.active { opacity: 1; visibility: visible; z-index: 2; }
+  .slide .reveal { opacity: 0; }
+  .slide.active .reveal { animation: rise .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--d, 0s); }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+  .head { margin-bottom: 24px; }
+  .head .kicker { font-size: 13.5px; letter-spacing: .32em; font-weight: 700; color: var(--accent); margin-bottom: 9px; }
+  .head h2 { font-size: 37px; font-weight: 800; letter-spacing: .01em; }
+  .head .sub { margin-top: 8px; color: var(--muted); font-size: 16.5px; }
+
+  /* ---------- 通用组件 ---------- */
+  .cards { display: grid; gap: 18px; }
+  .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+  .cards.c4 { grid-template-columns: repeat(4, 1fr); }
+  .cards.c2x2 { grid-template-columns: repeat(2, 1fr); }
+  .card { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+  .card .ico { font-size: 30px; margin-bottom: 12px; }
+  .card b { display: block; font-size: 17.5px; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.04); font-size: 14px; }
+  .chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  .feat { display: flex; gap: 14px; padding: 13px 16px; background: rgba(255,255,255,.03);
+    border: 1px solid var(--line); border-radius: 14px; align-items: flex-start; }
+  .feat .ico { font-size: 21px; line-height: 1.3; }
+  .feat b { display: block; font-size: 16px; margin-bottom: 3px; }
+  .feat span { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .feats { display: grid; gap: 12px; }
+
+  .bar { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 14px;
+    background: rgba(255,255,255,.03); border: 1px solid var(--line); font-size: 14.5px; color: var(--muted); }
+  .bar b { color: var(--ink); }
+  .bar code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px;
+    background: rgba(34,211,238,.1); color: #7dd3fc; padding: 2px 8px; border-radius: 6px; }
+
+  /* ---------- 封面 / 结尾 ---------- */
+  .center { align-items: center; justify-content: center; text-align: center; }
+  .cover .chip { font-size: 15px; letter-spacing: .1em; }
+  .cover h1 { font-size: 100px; font-weight: 900; letter-spacing: .01em; margin: 26px 0 6px; line-height: 1.1; }
+  .cover h1 .grad { background: linear-gradient(100deg, #22d3ee 10%, #a78bfa 60%, #f472b6 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cover .sub { font-size: 26px; font-weight: 600; color: #c6cde4; }
+  .cover .tagline { margin-top: 18px; font-size: 19px; color: var(--muted); }
+  .cover .tagline em { color: var(--accent); font-style: normal; }
+  .team { display: flex; gap: 12px; margin-top: 44px; flex-wrap: wrap; justify-content: center; }
+  .hint { margin-top: 46px; font-size: 13px; color: #5a6480; letter-spacing: .08em; }
+  .end h1 { font-size: 72px; font-weight: 900; margin-bottom: 16px; }
+  .end .sub2 { font-size: 20px; color: var(--muted); margin-bottom: 36px; }
+
+  /* ---------- 问题页 ---------- */
+  .answer { margin-top: auto; display: flex; align-items: center; gap: 18px; padding: 20px 28px; border-radius: 18px;
+    background: linear-gradient(90deg, rgba(34,211,238,.09), rgba(167,139,250,.09)); border: 1px solid #2c3a63; font-size: 19px; }
+  .answer .lab { font-size: 13px; letter-spacing: .25em; color: var(--accent); font-weight: 700; white-space: nowrap; }
+
+  /* ---------- 方案流程条 ---------- */
+  .flow { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; flex-wrap: nowrap; }
+  .fnode { padding: 12px 17px; border-radius: 13px; background: rgba(255,255,255,.04);
+    border: 1px solid #263252; font-size: 15.5px; white-space: nowrap; }
+  .fnode b { color: var(--accent); }
+  .farrow { color: var(--accent); font-size: 19px; opacity: .8; }
+
+  /* ---------- 架构图 ---------- */
+  .archwrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .archwrap svg { max-width: 100%; max-height: 100%; }
+  .legend { display: flex; align-items: center; justify-content: center; gap: 26px; font-size: 14px; color: #c0c8e2; }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .legend em { font-style: normal; color: #5a6480; font-size: 13px; margin-left: 6px; }
+  .svgsub { fill: #8b93ad; }
+  .svgtitle { fill: #e8ecf8; font-weight: 700; }
+  .flowline { stroke-dasharray: 7 7; animation: dashmove 1.3s linear infinite; }
+  @keyframes dashmove { to { stroke-dashoffset: -28; } }
+
+  /* ---------- 旅程步骤 ---------- */
+  .quote { display: inline-block; align-self: flex-start; padding: 12px 22px; border-radius: 14px; margin-bottom: 22px;
+    background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.35); font-size: 18px; }
+  .quote small { display: block; margin-top: 3px; font-size: 13px; color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; flex: 1; align-content: stretch; }
+  .step { position: relative; padding: 18px 18px 16px; background: rgba(255,255,255,.03);
+    border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .step .n { position: absolute; top: 10px; right: 14px; font-family: ui-monospace, monospace;
+    font-size: 34px; font-weight: 700; color: rgba(255,255,255,.07); }
+  .step .ico { font-size: 26px; margin-bottom: 10px; }
+  .step b { display: block; font-size: 16px; margin-bottom: 5px; }
+  .step p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .step code { font-family: ui-monospace, monospace; font-size: 12px; color: #4ade80; }
+
+  /* ---------- 模块总览 ---------- */
+  .modcard { border-radius: 18px; padding: 22px; background: rgba(255,255,255,.03); border: 1px solid var(--line);
+    border-top: 3px solid var(--mc); display: flex; flex-direction: column; gap: 10px; }
+  .modcard .role { font-size: 13px; letter-spacing: .2em; font-weight: 700; }
+  .modcard h3 { font-size: 21px; }
+  .modcard .meta { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .modcard .out { margin-top: auto; font-size: 13px; color: #c0c8e2; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .modcard .out b { font-size: 13px; }
+
+  /* ---------- 模块详情页 ---------- */
+  .detail { display: grid; grid-template-columns: 1.12fr .88fr; gap: 40px; flex: 1; min-height: 0; }
+  .mod-a .kicker { color: var(--ma); } .mod-b .kicker { color: var(--mb); }
+  .mod-c .kicker { color: var(--mc); } .mod-d .kicker { color: var(--md); }
+  .rolechips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  /* 模块 B 页 · 两步走卡片 */
+  .tcard { border-radius: 16px; padding: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--line); }
+  .tcard .m { display: inline-block; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 700; color: #0a0f1e;
+    background: var(--accent); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+  .tcard b { display: block; font-size: 16.5px; margin-bottom: 7px; }
+  .tcard p { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  /* 模块 C 页：内容较满，整体紧凑化 */
+  .mod-c .head { margin-bottom: 14px; }
+  .mod-c .answer { padding: 13px 22px; font-size: 15.5px; }
+  .mod-c .loop { padding: 10px 10px 0; }
+  .mod-c .loopback { margin-top: 4px; }
+  .mod-c .cards { margin-top: 10px; gap: 14px; }
+  .mod-c .card { padding: 14px 18px; }
+  .mod-c .card .ico { font-size: 24px; margin-bottom: 6px; }
+  .mod-c .card b { font-size: 16.5px; margin-bottom: 5px; }
+  .mod-c .card p { font-size: 13.5px; }
+  .mod-c .bar { margin-top: 12px; padding: 10px 18px; }
+
+  /* 手机模型 */
+  .phonewrap { display: flex; align-items: center; justify-content: center; }
+  .phone { width: 250px; height: 452px; border-radius: 36px; border: 2px solid #33406a; position: relative;
+    background: linear-gradient(180deg, #101832, #0a1020); padding: 34px 13px 14px; display: flex; flex-direction: column; gap: 9px;
+    box-shadow: 0 26px 60px rgba(0,0,0,.5); }
+  .phone::before { content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+    width: 76px; height: 16px; border-radius: 9px; background: #070b16; border: 1px solid #2a3554; }
+  .app-bar { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); padding: 0 4px 4px; }
+  .app-bar .dot-on { width: 8px; height: 8px; border-radius: 50%; background: var(--md); box-shadow: 0 0 8px var(--md); }
+  .bubble { max-width: 84%; padding: 9px 12px; border-radius: 14px; font-size: 13px; line-height: 1.5; }
+  .bubble.me { align-self: flex-end; background: linear-gradient(135deg, rgba(34,211,238,.16), rgba(167,139,250,.16));
+    border: 1px solid #3b4a7a; border-bottom-right-radius: 4px; }
+  .bubble.bot { align-self: flex-start; background: rgba(255,255,255,.05); border: 1px solid #263252; border-bottom-left-radius: 4px; }
+  .toolchip { align-self: flex-start; font-family: ui-monospace, monospace; font-size: 11px; color: var(--md);
+    background: rgba(74,222,128,.08); border: 1px dashed rgba(74,222,128,.45); padding: 6px 10px; border-radius: 10px; }
+  .telemetry { margin-top: auto; display: flex; gap: 7px; justify-content: center; font-size: 11px; color: var(--muted); }
+  .telemetry span { background: rgba(255,255,255,.04); border: 1px solid var(--line); padding: 4px 9px; border-radius: 99px; }
+
+  /* Agent 循环 */
+  .loop { display: flex; align-items: center; gap: 10px; justify-content: center; padding: 20px 10px 6px; }
+  .lnode { padding: 11px 16px; border-radius: 12px; font-size: 14.5px; text-align: center;
+    background: rgba(167,139,250,.1); border: 1px solid rgba(167,139,250,.45); }
+  .lnode small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .larrow { color: var(--mc); font-size: 18px; }
+  .loopback { text-align: center; font-size: 12.5px; color: #5a6480; margin-top: 10px; }
+
+  /* 设备清单 */
+  .devgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .dev { display: flex; align-items: center; gap: 10px; padding: 12px 13px; border-radius: 12px;
+    background: rgba(74,222,128,.05); border: 1px solid rgba(74,222,128,.28); font-size: 13.5px; }
+  .dev .ico { font-size: 19px; }
+  .dev small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  /* ---------- 场景 ---------- */
+  .scene .q { font-size: 17px; font-weight: 700; color: #cfe9ff; margin-bottom: 10px; }
+  .scene .tag { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; color: var(--accent);
+    border: 1px solid rgba(34,211,238,.45); border-radius: 99px; padding: 3px 10px; margin-bottom: 12px; }
+  .scene p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+  .scene .why { margin-top: 10px; font-size: 12.5px; color: var(--mc); }
+
+  /* ---------- 风险 ---------- */
+  .riskrows { display: grid; gap: 14px; }
+  .riskrow { display: grid; grid-template-columns: 1fr 46px 1.15fr; align-items: stretch; gap: 0; }
+  .rside { padding: 15px 20px; border-radius: 15px; display: flex; align-items: center; gap: 14px; font-size: 14.5px; }
+  .rside .ico { font-size: 22px; }
+  .rside.r { background: rgba(248,113,113,.06); border: 1px solid rgba(248,113,113,.3); }
+  .rside.r span { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
+  .rside.s { background: rgba(74,222,128,.05); border: 1px solid rgba(74,222,128,.3); }
+  .rarrow { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 21px; }
+
+  /* ---------- HUD ---------- */
+  #bar { position: fixed; left: 0; bottom: 0; height: 4px; width: 0; z-index: 60;
+    background: linear-gradient(90deg, var(--accent), var(--mc)); transition: width .35s ease; }
+  #brand { position: fixed; left: 22px; bottom: 15px; z-index: 60; font-size: 12.5px; color: #5a6480; letter-spacing: .06em; }
+  #dots { position: fixed; bottom: 17px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; gap: 7px; }
+  #dots button { width: 8px; height: 8px; border-radius: 50%; border: none; background: #2a3554; cursor: pointer; padding: 0; transition: all .25s; }
+  #dots button:hover { background: #4a5a8a; }
+  #dots button.on { background: var(--accent); box-shadow: 0 0 8px var(--accent); transform: scale(1.25); }
+  #hud { position: fixed; right: 20px; bottom: 10px; z-index: 60; display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--muted); }
+  #hud button { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); background: rgba(255,255,255,.03);
+    color: var(--ink); font-size: 15px; cursor: pointer; }
+  #hud button:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide.active .reveal { animation: none; opacity: 1; }
+    .flowline { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1 封面 -->
+  <section class="slide cover center" data-title="封面">
+    <div class="reveal"><span class="chip">🍓 创客课程设计 · 2026 秋</span></div>
+    <h1 class="reveal" style="--d:.08s">Pi<span class="grad">Agent</span></h1>
+    <p class="sub reveal" style="--d:.16s">基于树莓派的 AI Agent 物联网控制平台</p>
+    <p class="tagline reveal" style="--d:.24s">让大模型从「会聊天」变成<em>「会动手」</em></p>
+    <div class="team reveal" style="--d:.36s">
+      <span class="chip"><i style="background:var(--ma)"></i>A · 用户界面</span>
+      <span class="chip"><i style="background:var(--mb)"></i>B · VPS 通信</span>
+      <span class="chip"><i style="background:var(--mc)"></i>C · 树莓派 Agent</span>
+      <span class="chip"><i style="background:var(--md)"></i>D · 设备适配</span>
+    </div>
+    <p class="hint reveal" style="--d:.5s">← → 翻页 &nbsp;·&nbsp; 空格 下一页 &nbsp;·&nbsp; F 全屏 &nbsp;·&nbsp; 底部圆点跳转</p>
+  </section>
+
+  <!-- 2 背景与动机 -->
+  <section class="slide" data-title="背景与动机">
+    <header class="head reveal">
+      <p class="kicker">01 · 背景与动机</p>
+      <h2>我们要解决什么问题？</h2>
+    </header>
+    <div class="cards c3" style="flex:1">
+      <div class="card reveal" style="--d:.1s">
+        <div class="ico">🔒</div><b>设备被锁在内网</b>
+        <p>寝室、家里的硬件躲在 NAT 后面——人不在现场，就完全摸不到，更谈不上远程控制。</p>
+      </div>
+      <div class="card reveal" style="--d:.2s">
+        <div class="ico">🧩</div><b>传统智能家居不够聪明</b>
+        <p>各家 App 各自为战、场景写死，没法用一句自然语言，自由组合出想要的动作。</p>
+      </div>
+      <div class="card reveal" style="--d:.3s">
+        <div class="ico">🌉</div><b>AI 与物理世界缺一座桥</b>
+        <p>想让 AI 真正「动手」，缺一套低成本、可拆解、能学完整链路的实验平台。</p>
+      </div>
+    </div>
+    <div class="answer reveal" style="--d:.45s">
+      <span class="lab">我们的回答</span>
+      一块树莓派 5 🖥 ＋ 一个 AI Agent 🧠 ＋ 一台云 VPS ☁️ —— 全链路自研
+    </div>
+  </section>
+
+  <!-- 3 方案总览 -->
+  <section class="slide" data-title="方案总览">
+    <header class="head reveal">
+      <p class="kicker">02 · 方案总览</p>
+      <h2>一句话，让千里之外的硬件动起来</h2>
+    </header>
+    <div class="flow reveal" style="--d:.1s">
+      <span class="fnode">🗣 用户<b>说一句话</b></span><span class="farrow">→</span>
+      <span class="fnode">☁️ VPS <b>中继转发</b></span><span class="farrow">→</span>
+      <span class="fnode">🧠 Agent <b>理解规划</b></span><span class="farrow">→</span>
+      <span class="fnode">🔧 <b>调用工具</b> MCP</span><span class="farrow">→</span>
+      <span class="fnode">⚡ 硬件<b>真实动作</b></span>
+    </div>
+    <div class="cards c2x2" style="flex:1">
+      <div class="card reveal" style="--d:.2s">
+        <div class="ico">🗣</div><b>自然语言操作物理世界</b>
+        <p>没有遥控器，语言就是接口；Agent 负责理解与规划，用户只管说。</p>
+      </div>
+      <div class="card reveal" style="--d:.28s">
+        <div class="ico">🔌</div><b>MCP 标准化设备接入</b>
+        <p>每类设备就是一组工具（tool）：加设备 = 加一个工具，即插即用，Agent 代码零改动。</p>
+      </div>
+      <div class="card reveal" style="--d:.36s">
+        <div class="ico">🛰</div><b>出站长连接穿透 NAT</b>
+        <p>树莓派主动向外连接 VPS，校园网、家宽、手机热点都畅通，无需公网 IP。</p>
+      </div>
+      <div class="card reveal" style="--d:.44s">
+        <div class="ico">🧱</div><b>四模块契约解耦</b>
+        <p>接口先行、四线并行开发，本身就是一次完整的工程协作训练。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 系统架构 -->
+  <section class="slide" data-title="系统架构">
+    <header class="head reveal">
+      <p class="kicker">03 · 系统架构</p>
+      <h2>系统总体架构</h2>
+    </header>
+    <div class="archwrap reveal" style="--d:.12s">
+      <svg width="790" height="446" viewBox="0 0 1060 600" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="PiAgent 系统架构图：用户界面经 HTTPS 与 WebSocket 连接云端 VPS 网关，网关经出站 WebSocket 长连接到寝室内的树莓派 Agent，Agent 通过 MCP 协议调用设备服务，驱动传感器与执行器；Agent 经 VPS 代理调用云端大模型 API。">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#7c8db5"/>
+          </marker>
+        </defs>
+
+        <!-- 分区 -->
+        <rect x="16" y="140" width="180" height="310" rx="16" fill="rgba(255,255,255,0.02)" stroke="#2a3554"/>
+        <text x="106" y="168" text-anchor="middle" font-size="16" class="svgsub">用户侧</text>
+        <rect x="320" y="40" width="270" height="520" rx="16" fill="rgba(56,189,248,0.05)" stroke="rgba(56,189,248,0.4)"/>
+        <text x="455" y="70" text-anchor="middle" font-size="16" fill="#38bdf8">☁ 云端 VPS · 公网</text>
+        <rect x="700" y="40" width="344" height="520" rx="16" fill="rgba(74,222,128,0.03)" stroke="rgba(74,222,128,0.35)" stroke-dasharray="7 6"/>
+        <text x="872" y="70" text-anchor="middle" font-size="16" fill="#4ade80">🏠 寝室 · NAT 内网</text>
+
+        <!-- 用户 -->
+        <text x="106" y="226" text-anchor="middle" font-size="38">👤</text>
+        <text x="106" y="252" text-anchor="middle" font-size="14" class="svgsub">用户</text>
+
+        <!-- 界面 A -->
+        <rect x="46" y="286" width="120" height="100" rx="12" fill="rgba(244,114,182,0.12)" stroke="#f472b6"/>
+        <text x="106" y="309" text-anchor="middle" font-size="13" fill="#f472b6">模块 A</text>
+        <text x="106" y="337" text-anchor="middle" font-size="20" class="svgtitle">用户界面</text>
+        <text x="106" y="363" text-anchor="middle" font-size="14" class="svgsub">Web App</text>
+
+        <!-- 网关 B -->
+        <rect x="350" y="150" width="240" height="120" rx="12" fill="rgba(56,189,248,0.1)" stroke="#38bdf8"/>
+        <text x="470" y="173" text-anchor="middle" font-size="13" fill="#38bdf8">模块 B</text>
+        <text x="470" y="201" text-anchor="middle" font-size="20" class="svgtitle">通信网关</text>
+        <text x="470" y="227" text-anchor="middle" font-size="14" class="svgsub">用户鉴权 · 设备管理</text>
+        <text x="470" y="249" text-anchor="middle" font-size="14" class="svgsub">消息路由 · 全链路 TLS</text>
+
+        <!-- LLM -->
+        <rect x="350" y="340" width="240" height="110" rx="12" fill="rgba(167,139,250,0.07)" stroke="#a78bfa" stroke-dasharray="6 5"/>
+        <text x="470" y="377" text-anchor="middle" font-size="18" class="svgtitle">🧠 大模型 API</text>
+        <text x="470" y="401" text-anchor="middle" font-size="14" class="svgsub">GLM / Qwen / DeepSeek</text>
+        <text x="470" y="423" text-anchor="middle" font-size="13" class="svgsub">密钥只存 VPS · 不落地</text>
+
+        <!-- 树莓派 -->
+        <rect x="716" y="100" width="312" height="236" rx="14" fill="rgba(255,255,255,0.03)" stroke="#3b4a6b"/>
+        <text x="872" y="127" text-anchor="middle" font-size="15" class="svgsub">🍓 树莓派 5</text>
+        <rect x="736" y="140" width="272" height="80" rx="10" fill="rgba(167,139,250,0.12)" stroke="#a78bfa"/>
+        <text x="872" y="162" text-anchor="middle" font-size="13" fill="#a78bfa">模块 C</text>
+        <text x="872" y="186" text-anchor="middle" font-size="19" class="svgtitle">Agent 运行时</text>
+        <text x="872" y="209" text-anchor="middle" font-size="13.5" class="svgsub">意图理解 · 规划 · 安全闸门</text>
+        <rect x="736" y="236" width="272" height="80" rx="10" fill="rgba(74,222,128,0.1)" stroke="#4ade80"/>
+        <text x="872" y="258" text-anchor="middle" font-size="13" fill="#4ade80">模块 D</text>
+        <text x="872" y="282" text-anchor="middle" font-size="19" class="svgtitle">设备 MCP Server</text>
+        <text x="872" y="305" text-anchor="middle" font-size="13.5" class="svgsub">relay.set · dht.read · servo…</text>
+
+        <!-- 传感器 / 执行器 -->
+        <rect x="716" y="410" width="146" height="120" rx="12" fill="rgba(74,222,128,0.05)" stroke="rgba(74,222,128,0.5)"/>
+        <text x="789" y="449" text-anchor="middle" font-size="17" class="svgtitle">传感器</text>
+        <text x="789" y="475" text-anchor="middle" font-size="13" class="svgsub">温湿度 · 超声波</text>
+        <text x="789" y="496" text-anchor="middle" font-size="13" class="svgsub">人体红外 · 摄像头</text>
+        <rect x="898" y="410" width="146" height="120" rx="12" fill="rgba(74,222,128,0.05)" stroke="rgba(74,222,128,0.5)"/>
+        <text x="971" y="449" text-anchor="middle" font-size="17" class="svgtitle">执行器</text>
+        <text x="971" y="475" text-anchor="middle" font-size="13" class="svgsub">继电器 · 舵机</text>
+        <text x="971" y="496" text-anchor="middle" font-size="13" class="svgsub">风扇 · LED</text>
+
+        <!-- 连线 -->
+        <line x1="106" y1="254" x2="106" y2="282" stroke="#5a6b93" stroke-width="1.8" marker-end="url(#arr)"/>
+        <line class="flowline" x1="166" y1="336" x2="350" y2="210" stroke="#5a6b93" stroke-width="1.8" marker-start="url(#arr)" marker-end="url(#arr)"/>
+        <line class="flowline" x1="590" y1="200" x2="736" y2="180" stroke="#38bdf8" stroke-width="2" marker-start="url(#arr)" marker-end="url(#arr)"/>
+        <path class="flowline" d="M 736 212 C 680 212 680 390 590 390" fill="none" stroke="#a78bfa" stroke-width="1.8" marker-end="url(#arr)"/>
+        <line x1="872" y1="220" x2="872" y2="236" stroke="#5a6b93" stroke-width="1.8" marker-start="url(#arr)" marker-end="url(#arr)"/>
+        <line x1="789" y1="316" x2="789" y2="408" stroke="#5a6b93" stroke-width="1.8" marker-end="url(#arr)"/>
+        <line x1="971" y1="316" x2="971" y2="408" stroke="#5a6b93" stroke-width="1.8" marker-end="url(#arr)"/>
+
+        <!-- 连线标签 -->
+        <rect x="196" y="252" width="128" height="22" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="260" y="267.5" text-anchor="middle" font-size="13" fill="#9aa6c4">HTTPS + WebSocket</text>
+        <rect x="596" y="213" width="128" height="21" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="660" y="227.5" text-anchor="middle" font-size="13" fill="#38bdf8" font-weight="700">出站 WSS 长连接</text>
+        <rect x="598" y="239" width="124" height="19" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="660" y="252.5" text-anchor="middle" font-size="12" class="svgsub">穿透 NAT · 免公网 IP</text>
+        <rect x="628" y="318" width="88" height="20" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="672" y="331.5" text-anchor="middle" font-size="12" fill="#a78bfa">API 经 VPS 代理</text>
+        <rect x="884" y="218" width="46" height="19" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="907" y="231.5" text-anchor="middle" font-size="12" fill="#4ade80">MCP</text>
+        <rect x="822" y="350" width="116" height="20" rx="6" fill="#0c1326" stroke="#2a3554"/>
+        <text x="880" y="363.5" text-anchor="middle" font-size="12" class="svgsub">GPIO / I2C / PWM</text>
+      </svg>
+    </div>
+    <div class="legend reveal" style="--d:.3s">
+      <span><i style="background:var(--ma)"></i>A · 用户界面</span>
+      <span><i style="background:var(--mb)"></i>B · VPS 通信</span>
+      <span><i style="background:var(--mc)"></i>C · 树莓派 Agent</span>
+      <span><i style="background:var(--md)"></i>D · 设备适配</span>
+      <em>全链路 TLS 加密 · 模型密钥只存 VPS</em>
+    </div>
+  </section>
+
+  <!-- 5 指令的旅程 -->
+  <section class="slide" data-title="指令的旅程">
+    <header class="head reveal">
+      <p class="kicker">04 · 工作流</p>
+      <h2>一次指令的完整旅程</h2>
+    </header>
+    <div class="quote reveal" style="--d:.08s">「我快热死了，把风扇打开」
+      <small>演示时手机只开 4G —— 从一句话到风扇转动，中间发生了什么？</small>
+    </div>
+    <div class="steps">
+      <div class="step reveal" style="--d:.12s"><span class="n">01</span><div class="ico">📱</div><b>用户输入</b><p>手机 4G 网络上，发出一句话。</p></div>
+      <div class="step reveal" style="--d:.17s"><span class="n">02</span><div class="ico">🛰</div><b>VPS 中继</b><p>校验身份，路由到绑定的在线树莓派。</p></div>
+      <div class="step reveal" style="--d:.22s"><span class="n">03</span><div class="ico">🧠</div><b>Agent 理解</b><p>文本＋工具清单一起交给大模型。</p></div>
+      <div class="step reveal" style="--d:.27s"><span class="n">04</span><div class="ico">🔧</div><b>决定调用</b><p>大模型选择工具：<code>relay.set(0, true)</code></p></div>
+      <div class="step reveal" style="--d:.32s"><span class="n">05</span><div class="ico">⚡</div><b>MCP 执行</b><p>驱动 GPIO → 继电器闭合。</p></div>
+      <div class="step reveal" style="--d:.37s"><span class="n">06</span><div class="ico">🌬</div><b>物理响应</b><p>风扇开始转动，真实世界发生变化。</p></div>
+      <div class="step reveal" style="--d:.42s"><span class="n">07</span><div class="ico">↩️</div><b>结果回传</b><p>执行结果沿原路返回到手机界面。</p></div>
+      <div class="step reveal" style="--d:.47s"><span class="n">08</span><div class="ico">✅</div><b>任务完成</b><p>「已为你打开风扇」，遥测同步刷新。</p></div>
+    </div>
+  </section>
+
+  <!-- 6 分工总览 -->
+  <section class="slide" data-title="分工总览">
+    <header class="head reveal">
+      <p class="kicker">05 · 团队分工</p>
+      <h2>四大模块 · 一个有机体</h2>
+      <p class="sub">接口先行，四线并行——每个人负责一块，拼起来就是完整系统</p>
+    </header>
+    <div class="cards c4" style="flex:1">
+      <div class="modcard reveal" style="--d:.1s; border-top-color:var(--ma)">
+        <span class="role" style="color:var(--ma)">「系统的脸」</span>
+        <h3>📸 用户界面</h3>
+        <p class="meta">用户唯一入口，演示时评委看到的全部；只与 VPS 通信，永不直连树莓派。</p>
+        <p class="out"><b>交付：</b>Web App（对话 · 面板 · 手动控制）<br>协作：与 B 定 API</p>
+      </div>
+      <div class="modcard reveal" style="--d:.18s; border-top-color:var(--mb)">
+        <span class="role" style="color:var(--mb)">「系统的血管」</span>
+        <h3>🛰 VPS 通信中继</h3>
+        <p class="meta">让内网设备远程可达、用户与设备解耦；承担鉴权、心跳、路由与加密。</p>
+        <p class="out"><b>交付：</b>WebSocket 网关＋消息协议<br>协作：与 A 定 API · 与 C 定协议</p>
+      </div>
+      <div class="modcard reveal" style="--d:.26s; border-top-color:var(--mc)">
+        <span class="role" style="color:var(--mc)">「系统的大脑」</span>
+        <h3>🧠 树莓派 Agent</h3>
+        <p class="meta">把自然语言翻译成硬件动作；保持「薄」，设备能力全靠 MCP 工具注入。</p>
+        <p class="out"><b>交付：</b>Agent 守护进程＋提示词<br>协作：与 B 定协议 · 与 D 定工具</p>
+      </div>
+      <div class="modcard reveal" style="--d:.34s; border-top-color:var(--md)">
+        <span class="role" style="--color:var(--md)">「系统的手和眼」</span>
+        <h3>🔧 设备适配</h3>
+        <p class="meta">软件的终点、物理世界的起点；接线、驱动，并把设备封装成 MCP 工具。</p>
+        <p class="out"><b>交付：</b>设备 MCP Server＋接线文档<br>协作：与 C 定工具清单</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 模块 A -->
+  <section class="slide mod-a" data-title="模块 A · 用户界面">
+    <header class="head reveal">
+      <p class="kicker">06 · 模块 A（界面组）</p>
+      <h2>用户界面 —— 系统的脸</h2>
+    </header>
+    <div class="detail">
+      <div>
+        <div class="rolechips reveal" style="--d:.08s">
+          <span class="chip"><i style="background:var(--ma)"></i>用户唯一入口</span>
+          <span class="chip"><i style="background:var(--ma)"></i>只与 VPS 通信</span>
+          <span class="chip"><i style="background:var(--ma)"></i>响应式 Web App</span>
+        </div>
+        <div class="feats">
+          <div class="feat reveal" style="--d:.14s"><span class="ico">🔐</span><div><b>登录鉴权</b><span>对接 VPS 账号体系（JWT）</span></div></div>
+          <div class="feat reveal" style="--d:.2s"><span class="ico">💬</span><div><b>对话页</b><span>发指令、看回复，并展示「正在调用哪个工具」的过程</span></div></div>
+          <div class="feat reveal" style="--d:.26s"><span class="ico">📊</span><div><b>设备面板</b><span>树莓派在线状态＋传感器实时读数</span></div></div>
+          <div class="feat reveal" style="--d:.32s"><span class="ico">🎛</span><div><b>手动控制台</b><span>绕过 Agent 直接开关——兜底，也是联调利器</span></div></div>
+        </div>
+        <div class="bar reveal" style="--d:.4s; margin-top:14px">💡 技术选型&nbsp;<b>Vue3 / React</b>&nbsp;·&nbsp;PWA 加到主屏 · WebSocket 实时通道</div>
+      </div>
+      <div class="phonewrap reveal" style="--d:.25s">
+        <div class="phone">
+          <div class="app-bar"><span class="dot-on"></span>PiAgent · 寝室设备</div>
+          <div class="bubble me">把风扇打开</div>
+          <div class="toolchip">⚙ relay.set(0, true) ✓</div>
+          <div class="bubble bot">已为你打开风扇 🌬 现在室温 26.4°C</div>
+          <div class="bubble me">如果超过 30°C 记得提醒我</div>
+          <div class="bubble bot">好的，我会持续关注温度 ✅</div>
+          <div class="telemetry"><span>🌡 26.4°C</span><span>💧 58%</span><span>🟢 在线</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 模块 B -->
+  <section class="slide mod-b" data-title="模块 B · VPS 通信">
+    <header class="head reveal">
+      <p class="kicker">07 · 模块 B（通信组）</p>
+      <h2>VPS 通信中继 —— 系统的血管</h2>
+    </header>
+    <div class="detail">
+      <div>
+        <div class="feat reveal" style="--d:.1s; align-items:flex-start">
+          <span class="ico"> ❓</span>
+          <div><b>为什么需要 VPS？</b>
+          <span>树莓派在校园网 / 家宽的 NAT 后，没有公网 IP、入站不可达。解法：让它<b style="display:inline;color:var(--mb)">主动向外</b>建立 WebSocket 长连接——出站流量在任何网络都畅通，甚至手机热点即可。</span></div>
+        </div>
+        <div class="feats" style="margin-top:12px">
+          <div class="feat reveal" style="--d:.18s"><span class="ico">🔑</span><div><b>用户鉴权</b><span>注册登录 · JWT · 用户-设备绑定</span></div></div>
+          <div class="feat reveal" style="--d:.24s"><span class="ico">📡</span><div><b>设备管理</b><span>注册 · 心跳 · 在线状态</span></div></div>
+          <div class="feat reveal" style="--d:.3s"><span class="ico">🔀</span><div><b>双向路由</b><span>指令下发 · 结果与遥测回传</span></div></div>
+          <div class="feat reveal" style="--d:.36s"><span class="ico">🧠</span><div><b>LLM 出口代理</b><span>模型密钥只存 VPS，不落到终端</span></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="rolechips reveal" style="--d:.14s">
+          <span class="chip"><i style="background:var(--mb)"></i>两步走策略</span>
+        </div>
+        <div class="tcard reveal" style="--d:.2s; margin-bottom:14px">
+          <span class="m" style="background:var(--mb)">第 1 步 · 第 1 周</span>
+          <b>快速通道</b>
+          <p>frp / SSH 反向隧道先打通「手机 → VPS → 树莓派」，全组尽早看到端到端跑通的希望。</p>
+        </div>
+        <div class="tcard reveal" style="--d:.28s; margin-bottom:14px; border-color:rgba(56,189,248,.45)">
+          <span class="m" style="background:var(--mb)">第 2 步 · 正式方案</span>
+          <b>自研 WebSocket 网关 ✦</b>
+          <p>Node.js / Go / FastAPI＋JSON 消息协议——教学价值与演示价值最高。</p>
+        </div>
+        <div class="bar reveal" style="--d:.36s">📦 交付&nbsp;<b>网关服务</b>&nbsp;·&nbsp;<b>消息协议文档</b>&nbsp;·&nbsp;部署脚本</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 模块 C -->
+  <section class="slide mod-c" data-title="模块 C · 树莓派 Agent">
+    <header class="head reveal">
+      <p class="kicker">08 · 模块 C（Agent 组）</p>
+      <h2>树莓派 Agent —— 系统的大脑</h2>
+    </header>
+    <div class="answer reveal" style="--d:.08s; font-size:16.5px; margin-top:0">
+      <span class="lab" style="color:var(--mc)">设计原则</span>
+      Agent 保持「薄」：只做三件事——收指令 · 调大模型 · 调工具。设备能力全部由 MCP 工具注入，换硬件不改 Agent。
+    </div>
+    <div class="loop reveal" style="--d:.16s">
+      <span class="lnode">意图理解<small>用户说了什么</small></span><span class="larrow">→</span>
+      <span class="lnode">工具调用<small>MCP tool</small></span><span class="larrow">→</span>
+      <span class="lnode">观察结果<small>成功 / 失败</small></span><span class="larrow">→</span>
+      <span class="lnode">自然语言汇报<small>回复用户</small></span>
+    </div>
+    <p class="loopback reveal" style="--d:.2s">↺ &nbsp;循环直到任务完成（ReAct 模式）</p>
+    <div class="cards c2x2" style="flex:1; margin-top:16px">
+      <div class="card reveal" style="--d:.26s"><div class="ico">🧠</div><b>LLM 接入</b>
+        <p>云 API 经 VPS 代理调用（GLM / Qwen / DeepSeek）；ollama 本地小模型作离线彩蛋。</p></div>
+      <div class="card reveal" style="--d:.32s"><div class="ico">🛡</div><b>安全闸门</b>
+        <p>工具白名单 · 参数强校验 · 高危操作（继电器大电流）二次确认。</p></div>
+      <div class="card reveal" style="--d:.38s"><div class="ico">⚙️</div><b>工程化</b>
+        <p>systemd 守护进程：开机自启、崩溃自动拉起、断网自动重连。</p></div>
+      <div class="card reveal" style="--d:.44s"><div class="ico">✍️</div><b>关键产出</b>
+        <p>系统提示词与工具描述文案——直接决定 Agent 好不好用。</p></div>
+    </div>
+    <div class="bar reveal" style="--d:.5s; margin-top:16px">💡 技术&nbsp;<b>Python</b>&nbsp;·&nbsp;<code>mcp</code>&nbsp;官方 SDK · 手写 tool-use 循环（可选 LangGraph）</div>
+  </section>
+
+  <!-- 10 模块 D -->
+  <section class="slide mod-d" data-title="模块 D · 设备适配">
+    <header class="head reveal">
+      <p class="kicker">09 · 模块 D（硬件组）</p>
+      <h2>物理设备适配 —— 系统的手和眼</h2>
+    </header>
+    <div class="detail">
+      <div>
+        <div class="feats">
+          <div class="feat reveal" style="--d:.1s"><span class="ico">🔌</span><div><b>接口与驱动</b><span>GPIO / I2C / PWM · gpiozero（Pi 5 兼容）⚠️ 老 RPi.GPIO 不支持树莓派 5</span></div></div>
+          <div class="feat reveal" style="--d:.18s"><span class="ico">🧩</span><div><b>核心产出</b><span>每类设备封装成一组 MCP 工具：<b style="display:inline">加设备 = 加工具</b>，Agent 零改动</span></div></div>
+          <div class="feat reveal" style="--d:.26s"><span class="ico">🚨</span><div><b>安全红线</b><span>GPIO 3.3V 电平 · 5V 信号分压 · 共地 · 全程低压演示，不碰 220V</span></div></div>
+        </div>
+        <div class="bar reveal" style="--d:.34s; margin-top:14px">📦 交付&nbsp;<b>设备 MCP Server</b>&nbsp;·&nbsp;接线图与引脚表 · 工具清单文档</div>
+      </div>
+      <div>
+        <div class="rolechips reveal" style="--d:.14s">
+          <span class="chip"><i style="background:var(--md)"></i>候选设备清单</span>
+        </div>
+        <div class="devgrid">
+          <div class="dev reveal" style="--d:.18s"><span class="ico">💡</span><div>LED＋电阻<small>入门第一课</small></div></div>
+          <div class="dev reveal" style="--d:.21s"><span class="ico">🌬</span><div>继电器＋12V 风扇<small>主打演示道具</small></div></div>
+          <div class="dev reveal" style="--d:.24s"><span class="ico">🌀</span><div>SG90 舵机<small>物理拨杆开关</small></div></div>
+          <div class="dev reveal" style="--d:.27s"><span class="ico">🖥</span><div>OLED 屏<small>设备状态屏</small></div></div>
+          <div class="dev reveal" style="--d:.3s"><span class="ico">🌡</span><div>AHT20 温湿度<small>I2C 更稳定</small></div></div>
+          <div class="dev reveal" style="--d:.33s"><span class="ico">📡</span><div>HC-SR04 超声波<small>Echo 需分压</small></div></div>
+          <div class="dev reveal" style="--d:.36s"><span class="ico">🚶</span><div>PIR 人体红外<small>联动场景</small></div></div>
+          <div class="dev reveal" style="--d:.39s"><span class="ico">📷</span><div>摄像头模块<small>进阶 · 多模态</small></div></div>
+          <div class="dev reveal" style="--d:.42s"><span class="ico">🔔</span><div>有源蜂鸣器<small>提醒场景</small></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 可能的演示 -->
+  <section class="slide" data-title="可能的演示">
+    <header class="head reveal">
+      <p class="kicker">10 · 演示设计</p>
+      <h2>可能的演示</h2>
+      <p class="sub">候选场景 · 由易到难，最终演示组合视开发进度而定</p>
+    </header>
+    <div class="cards c2x2" style="flex:1">
+      <div class="card scene reveal" style="--d:.1s">
+        <span class="tag">基础</span>
+        <p class="q">「千里之外」</p>
+        <p>可以只用 4G 网络，远程一句话让寝室的风扇转起来、灯亮起来。</p>
+        <p class="why">★ 证明「真·远程」，穿透 NAT 不是 PPT 概念</p>
+      </div>
+      <div class="card scene reveal" style="--d:.18s">
+        <span class="tag">基础</span>
+        <p class="q">「寝室现在多少度？」</p>
+        <p>可以让 Agent 读取温湿度传感器，用人话回答。</p>
+        <p class="why">★ AI 长出了「眼睛」，数据变成语言</p>
+      </div>
+      <div class="card scene reveal" style="--d:.26s">
+        <span class="tag">进阶</span>
+        <p class="q">「太热了，想办法让我凉快点」</p>
+        <p>可以让 Agent 自己读温度 → 开风扇 → 汇报决策过程。</p>
+        <p class="why">★ 这是 Agent 与遥控器的本质区别</p>
+      </div>
+      <div class="card scene reveal" style="--d:.34s">
+        <span class="tag">彩蛋</span>
+        <p class="q">「拔网线挑战」</p>
+        <p>可以现场拔掉树莓派网线再插回：界面离线 → 在线，期间指令不丢。</p>
+        <p class="why">★ 展示工程可靠性：自愈与消息补发</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 风险 -->
+  <section class="slide" data-title="风险与应对">
+    <header class="head reveal">
+      <p class="kicker">11 · 风险与应对</p>
+      <h2>我们把坑想在了前面</h2>
+    </header>
+    <div class="riskrows" style="flex:1; align-content:center">
+      <div class="riskrow reveal" style="--d:.1s">
+        <div class="rside r"><span class="ico">⚡</span><div><b>寝室夜间断电断网</b><span>设备周期性离线</span></div></div>
+        <div class="rarrow">→</div>
+        <div class="rside s"><div>systemd 自启＋自动重连＋校园网自动认证；VPS 缓存离线指令，上线补发</div></div>
+      </div>
+      <div class="riskrow reveal" style="--d:.18s">
+        <div class="rside r"><span class="ico">📶</span><div><b>校园网账号不够</b><span>树莓派难入网</span></div></div>
+        <div class="rarrow">→</div>
+        <div class="rside s"><div>架构只需出站流量：手机热点、借道路由器均可，不需要公网 IP</div></div>
+      </div>
+      <div class="riskrow reveal" style="--d:.26s">
+        <div class="rside r"><span class="ico">🤖</span><div><b>LLM 幻觉 · 误操作</b><span>硬件误动作</span></div></div>
+        <div class="rarrow">→</div>
+        <div class="rside s"><div>工具白名单＋参数强校验＋高危操作二次确认；演示负载全低压</div></div>
+      </div>
+      <div class="riskrow reveal" style="--d:.34s">
+        <div class="rside r"><span class="ico">🔥</span><div><b>电气安全</b><span>烧板 / 触电风险</span></div></div>
+        <div class="rarrow">→</div>
+        <div class="rside s"><div>3.3V 电平 · 5V 信号分压 · 共地 · 全程低压演示，不碰 220V</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 结尾 -->
+  <section class="slide end center" data-title="谢谢">
+    <h1 class="reveal">谢谢观看 · Q&amp;A</h1>
+    <p class="sub2 reveal" style="--d:.12s">Pi<span style="color:var(--accent)">Agent</span> —— 让 AI 走进物理世界</p>
+    <div class="team reveal" style="--d:.24s; margin-top:8px">
+      <span class="chip"><i style="background:var(--ma)"></i>A · 用户界面</span>
+      <span class="chip"><i style="background:var(--mb)"></i>B · VPS 通信</span>
+      <span class="chip"><i style="background:var(--mc)"></i>C · 树莓派 Agent</span>
+      <span class="chip"><i style="background:var(--md)"></i>D · 设备适配</span>
+    </div>
+    <p class="hint reveal" style="--d:.4s">欢迎提问，也欢迎来现场摸摸这台会动手的树莓派 🍓</p>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="brand">PiAgent · 创客课程设计</div>
+<div id="dots"></div>
+<div id="hud">
+  <button id="prev" title="上一页（←）">‹</button>
+  <span id="pg"></span>
+  <button id="next" title="下一页（→）">›</button>
+  <button id="fs" title="全屏（F）">⛶</button>
+</div>
+
+<script>
+  (function () {
+    var stage = document.getElementById('stage');
+    function fit() {
+      var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var dotsBox = document.getElementById('dots');
+    slides.forEach(function (s, i) {
+      var d = document.createElement('button');
+      d.title = s.getAttribute('data-title') || ('第 ' + (i + 1) + ' 页');
+      d.addEventListener('click', function () { go(i); });
+      dotsBox.appendChild(d);
+    });
+    var dots = Array.prototype.slice.call(dotsBox.children);
+    var cur = 0;
+
+    function go(i) {
+      cur = Math.max(0, Math.min(slides.length - 1, i));
+      slides.forEach(function (s, idx) { s.classList.toggle('active', idx === cur); });
+      dots.forEach(function (d, idx) { d.classList.toggle('on', idx === cur); });
+      document.getElementById('bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+      document.getElementById('pg').textContent = (cur + 1) + ' / ' + slides.length;
+      history.replaceState(null, '', '#' + (cur + 1));
+    }
+
+    function toggleFS() {
+      if (document.fullscreenElement) { document.exitFullscreen(); }
+      else { document.documentElement.requestFullscreen(); }
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+      else if (e.key === 'Home') { go(0); }
+      else if (e.key === 'End') { go(slides.length - 1); }
+      else if (e.key === 'f' || e.key === 'F') { toggleFS(); }
+    });
+
+    document.getElementById('prev').addEventListener('click', function () { go(cur - 1); });
+    document.getElementById('next').addEventListener('click', function () { go(cur + 1); });
+    document.getElementById('fs').addEventListener('click', toggleFS);
+
+    var tx = null;
+    document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (tx === null) { return; }
+      var dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 50) { go(cur + (dx < 0 ? 1 : -1)); }
+      tx = null;
+    }, { passive: true });
+
+    var n = parseInt(location.hash.slice(1), 10);
+    go(Number.isInteger(n) && n >= 1 && n <= slides.length ? n - 1 : 0);
+  })();
+</script>
+</body>
+</html>
