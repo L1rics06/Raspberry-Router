@@ -1,0 +1,31 @@
+# PiAgent 树莓派 Agent 配置模板
+# 复制为 agent/config.toml 后填写（config.toml 含设备密钥，已在 .gitignore 排除之外的注意别提交）
+
+# VPS 网关地址（树莓派主动出站连接，穿透 NAT）
+server_url = "ws://<VPS地址>:8000"
+
+# 与服务端 manage.py add-device 创建的设备一致
+device_id  = "pi-dorm-01"
+device_token = "dev-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"   # add-device 时打印，只显示一次
+
+# LLM 模式：
+#   proxy —— 经 VPS 代理调真实大模型（Key 配在 VPS 端，推荐）
+#   mock  —— 离线规则模式，无需 Key，用于链路联调
+llm_mode = "proxy"
+# llm_model = "glm-4.6"        # 可选，覆盖 VPS 端默认模型
+
+max_steps = 6                   # Agent 循环最大步数（防失控）
+
+# 安全闸门
+allow_tools = ["*"]             # 工具白名单，"*" = 全部放行
+confirm_tools = ["relay.set"]   # 高危工具：仅手动控制台 confirmed=true 才执行
+
+# 心跳遥测：每次心跳调用该工具并捎带结果（如温湿度），留空 "" 关闭
+telemetry_tool = "dht.read"
+
+# 设备 MCP Server（分工 D 交付，可配置多个）
+[[mcp.servers]]
+name = "devices"
+command = "python3"
+args = ["../devices/mock_mcp_server.py"]
+# env = { }                    # 传给子进程的环境变量

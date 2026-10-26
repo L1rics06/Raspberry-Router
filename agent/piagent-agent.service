@@ -1,0 +1,19 @@
+# PiAgent Agent systemd 单元（分工3，部署在树莓派上）
+# 安装（在树莓派上）：
+#   sudo cp piagent-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now piagent-agent
+# 日志：journalctl -u piagent-agent -f
+[Unit]
+Description=PiAgent Agent (Raspberry Pi AI Agent daemon)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/piagent/agent
+ExecStart=/opt/piagent/agent/.venv/bin/python -m pi_agent
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,1 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 运行时数据（数据库、密钥），绝不入库
+server/data/
+agent/config.toml
+*.db
+.env
+*.env
+
+# MCP stdio 子进程日志（如有）
+*.log
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+.zcode/
+
+# 早期 Rust 脚手架遗留
 /target
