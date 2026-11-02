@@ -3,12 +3,23 @@
 Agent 对具体硬件零感知：加设备 = 在配置里加一个 [[mcp.servers]]。
 """
 import logging
+import re
 from contextlib import AsyncExitStack
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 log = logging.getLogger("piagent.mcp")
+
+# 部分 LLM 提供商（如 DeepSeek）严格要求函数名匹配 ^[a-zA-Z0-9_-]+$，
+# 而本项目工具契约是 <设备>.<动作>（如 fan.set），发给 LLM 前做名称净化，
+# 执行时再映射回真实 MCP 工具名。
+_LLM_INVALID = re.compile(r"[^a-zA-Z0-9_-]")
+
+
+def llm_tool_name(name: str) -> str:
+    """fan.set -> fan_set（仅用于发给 LLM 的 schema / 回传的 tool_calls）。"""
+    return _LLM_INVALID.sub("_", name)
 
 
 class MCPPool:
@@ -18,6 +29,7 @@ class MCPPool:
         self._sessions: dict[str, ClientSession] = {}   # server name → session
         self._owner: dict[str, str] = {}                # tool name → server name
         self._tools: dict[str, dict] = {}               # tool name → {description, inputSchema}
+        self._real_by_llm: dict[str, str] = {}          # 净化名 → 真实工具名
 
     async def start(self) -> None:
         for cfg in self._cfgs:
@@ -40,6 +52,7 @@ class MCPPool:
                     else {"type": "object", "properties": {}},
                 }
                 self._owner[t.name] = cfg.name
+                self._real_by_llm[llm_tool_name(t.name)] = t.name
                 names.append(t.name)
             self._sessions[cfg.name] = session
             log.info("MCP server '%s' 已启动，工具: %s", cfg.name, names)
@@ -55,15 +68,19 @@ class MCPPool:
         return list(self._tools)
 
     def openai_tools(self) -> list[dict]:
-        """转换为 OpenAI function-calling 的 tools schema。"""
+        """转换为 OpenAI function-calling 的 tools schema（工具名做净化）。"""
         return [
             {"type": "function", "function": {
-                "name": name,
+                "name": llm_tool_name(name),
                 "description": meta["description"] or name,
                 "parameters": meta["inputSchema"],
             }}
             for name, meta in self._tools.items()
         ]
+
+    def real_name(self, llm_name: str) -> str:
+        """把 LLM 回传的净化名（fan_set）映射回真实 MCP 工具名（fan.set）。"""
+        return self._real_by_llm.get(llm_name, llm_name)
 
     def schema_of(self, name: str) -> dict | None:
         meta = self._tools.get(name)

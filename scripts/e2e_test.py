@@ -73,6 +73,12 @@ async def main() -> None:
                          json={"tool": "fan.set", "args": {"state": True}})
         check("手动开风扇", r.status_code == 200 and r.json().get("ok") is True, r.text)
 
+        # 3b. 手动直控：舵机转到 45°
+        r = await c.post(f"{BASE}/api/devices/{dev_id}/command", headers=auth,
+                         json={"tool": "servo.set", "args": {"angle": 45}})
+        check("手动转舵机 45°",
+              r.status_code == 200 and r.json().get("ok") is True, r.text)
+
         # 4. 高危工具未确认 → 应被 Agent 安全闸门拒绝
         r = await c.post(f"{BASE}/api/devices/{dev_id}/command", headers=auth,
                          json={"tool": "relay.set", "args": {"ch": 0, "state": True}})
@@ -98,6 +104,12 @@ async def main() -> None:
               res and res.get("ok") and "fan.set" in "".join(res.get("actions", [])),
               json.dumps(res, ensure_ascii=False))
 
+        await ws.send(json.dumps({"type": "chat", "text": "把舵机打开"}))
+        res = await wait_result(ws)
+        check("聊天: 开舵机（Agent→MCP）",
+              res and res.get("ok") and "servo.set" in "".join(res.get("actions", [])),
+              json.dumps(res, ensure_ascii=False))
+
         await ws.send(json.dumps({"type": "chat", "text": "寝室现在多少度？"}))
         res = await wait_result(ws)
         check("聊天: 读温湿度（Agent→MCP）",
@@ -111,7 +123,7 @@ async def main() -> None:
                         params={"device_id": dev_id, "limit": 20})
         rows = r.json()
         kinds = {row["kind"] for row in rows}
-        check("历史记录落库", r.status_code == 200 and len(rows) >= 5
+        check("历史记录落库", r.status_code == 200 and len(rows) >= 6
               and {"chat", "tool"} <= kinds, f"rows={len(rows)} kinds={kinds}")
 
     print(f"\n== 结果: {_passed} 通过, {_failed} 失败 ==")

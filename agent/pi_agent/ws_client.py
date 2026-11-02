@@ -10,6 +10,10 @@ from .agent_loop import run_agent_loop, run_tool_direct
 log = logging.getLogger("piagent.ws")
 
 
+class AuthFailed(Exception):
+    """设备 token 无效：按协议属致命错误，重连无意义，应停止进程等运维处理。"""
+
+
 class AgentClient:
     def __init__(self, cfg, mcp, llm):
         self.cfg = cfg
@@ -34,6 +38,9 @@ class AgentClient:
             except asyncio.CancelledError:
                 log.info("收到退出信号")
                 return
+            except AuthFailed as e:
+                log.error("鉴权失败（%s），停止重连；请检查 device_token 后重启服务", e)
+                return
             except Exception as e:  # noqa: BLE001
                 log.warning("连接异常: %s; %ss 后重连", e, backoff)
             await asyncio.sleep(backoff)
@@ -49,6 +56,8 @@ class AgentClient:
         }, ensure_ascii=False))
         ack = json.loads(await asyncio.wait_for(ws.recv(), timeout=10))
         if ack.get("type") == "error":
+            if ack.get("code") == "auth_failed":
+                raise AuthFailed(f"设备 token 无效: {ack.get('message', '')}")
             raise RuntimeError(f"注册被拒绝: {ack.get('code')} {ack.get('message', '')}")
         if ack.get("type") != "register_ack" or not ack.get("ok"):
             raise RuntimeError(f"注册响应异常: {ack}")

@@ -5,10 +5,11 @@
     led.set(on)          LED 灯开关
     fan.set(state)       风扇（继电器驱动）开关
     relay.set(ch,state)  继电器通道控制（高危）
+    servo.set(angle)     舵机角度控制（0-180°）
     dht.read()           温湿度传感器读数（缓慢漂移的模拟值）
 
 分工 D 替换方案：用 gpiozero/smbus2 实现同名工具（保持参数 schema 一致），
-Agent 与上层零改动。工具契约见 docs/接口文档/mcp_tools_schema.md。
+真机版见同目录 device_mcp_server.py。工具契约见 docs/接口文档/mcp_tools_schema.md。
 
 运行方式：由 Agent 按 [[mcp.servers]] 配置以 stdio 子进程拉起，
 也可手动 `python mock_mcp_server.py` 直接在终端上观察。
@@ -31,7 +32,7 @@ log = logging.getLogger("mock-devices")
 mcp = FastMCP("mock-devices")
 
 # 模拟硬件状态（内存态；真实实现里对应 GPIO 电平/继电器吸合）
-STATE = {"led": False, "fan": False, "relay": [False] * 4}
+STATE = {"led": False, "fan": False, "relay": [False] * 4, "servo": 0}
 
 
 def _ret(**kw) -> str:
@@ -60,6 +61,16 @@ def relay_set(ch: int, state: bool) -> str:
     STATE["relay"][ch] = bool(state)
     log.info("🔌 继电器 ch%s %s", ch, "闭合" if state else "断开")
     return _ret(ch=ch, state=STATE["relay"][ch])
+
+
+@mcp.tool(name="servo.set",
+          description="控制舵机转动角度。angle 取 0-180 度：90=打开/开启位置，0=关闭/复位位置，180=另一侧最大角度。")
+def servo_set(angle: int) -> str:
+    if not 0 <= angle <= 180:
+        return json.dumps({"ok": False, "error": f"角度 {angle} 越界（0-180）"}, ensure_ascii=False)
+    STATE["servo"] = int(angle)
+    log.info("🦾 舵机转到 %s°", angle)
+    return _ret(servo=angle, detail=f"舵机已转到 {angle}°")
 
 
 @mcp.tool(name="dht.read", description="读取温湿度传感器。返回当前温度（°C）与相对湿度（%）。")

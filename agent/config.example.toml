@@ -12,7 +12,7 @@ device_token = "dev-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"   # add-device 时打印�
 #   proxy —— 经 VPS 代理调真实大模型（Key 配在 VPS 端，推荐）
 #   mock  —— 离线规则模式，无需 Key，用于链路联调
 llm_mode = "proxy"
-# llm_model = "glm-4.6"        # 可选，覆盖 VPS 端默认模型
+# llm_model = "deepseek-flash"  # 可选，覆盖 VPS 端默认模型
 
 max_steps = 6                   # Agent 循环最大步数（防失控）
 
@@ -24,8 +24,14 @@ confirm_tools = ["relay.set"]   # 高危工具：仅手动控制台 confirmed=tr
 telemetry_tool = "dht.read"
 
 # 设备 MCP Server（分工 D 交付，可配置多个）
+#   mock_mcp_server.py   —— 全模拟（无硬件联调）
+#   device_mcp_server.py —— 真机版（舵机走真实 GPIO，其余模拟；仅树莓派需装
+#                           devices/requirements-device.txt）
 [[mcp.servers]]
 name = "devices"
 command = "python3"
 args = ["../devices/mock_mcp_server.py"]
 # env = { }                    # 传给子进程的环境变量
+#   真机版示例：
+# args = ["../devices/device_mcp_server.py"]
+# env = { PIAGENT_SERVO_PIN = "17" }   # 舵机信号脚，默认 17；PIAGENT_SERVO_SIM=1 强制模拟

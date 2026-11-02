@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PiAgent 调试控制台</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --line:#28324a; --tx:#e8ecf5; --mut:#8b96ad;
+          --acc:#4f8cff; --ok:#3ecf8e; --warn:#ffb454; --err:#ff6b6b; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--tx); font:14px/1.6 "PingFang SC","Microsoft YaHei",system-ui,sans-serif; padding:24px; }
+  h1 { font-size:18px; margin-bottom:4px; } .sub { color:var(--mut); font-size:12px; margin-bottom:20px;}
+  .grid { display:grid; grid-template-columns:340px 1fr; gap:16px; max-width:1100px; margin:0 auto; }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:14px; color:var(--mut); font-weight:600; margin-bottom:12px; letter-spacing:.5px;}
+  input { width:100%; background:#0d1119; color:var(--tx); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px; }
+  button { background:var(--acc); color:#fff; border:0; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:13px; margin:2px 2px 2px 0; }
+  button:hover{ filter:brightness(1.1); } button.ghost{ background:#232c42; color:var(--tx); }
+  button.ok{ background:var(--ok); color:#08281c; } button.off{ background:#3a4460; color:var(--tx); }
+  .pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:11px; vertical-align:middle; }
+  .pill.on { background:rgba(62,207,142,.15); color:var(--ok); } .pill.off { background:rgba(139,150,173,.15); color:var(--mut); }
+  #chat { height:300px; overflow-y:auto; background:#0d1119; border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;}
+  .msg { margin:6px 0; } .msg .who{ font-size:11px; color:var(--mut);} .msg.user .who{color:var(--acc);} .msg.agent .who{color:var(--ok);}
+  .msg .act { font-size:11px; color:var(--warn); font-family:ui-monospace,monospace; }
+  #events { font:11px/1.5 ui-monospace,monospace; color:var(--mut); max-height:140px; overflow-y:auto; word-break:break-all;}
+  .bar { display:flex; gap:8px; } .bar input{ flex:1; margin:0;}
+  .kv { font-size:12px; color:var(--mut); }
+</style>
+</head>
+<body>
+<h1>PiAgent 调试控制台 <span class="kv">（联调用，正式界面由分工 A 交付）</span></h1>
+<div class="sub">VPS 网关 · WebSocket 中继 · MCP 工具链路</div>
+
+<div class="grid">
+  <div>
+    <div class="card" id="loginCard">
+      <h2>登录</h2>
+      <input id="u" placeholder="用户名">
+      <input id="p" type="password" placeholder="密码（≥6位）">
+      <button id="btnLogin">登录</button>
+      <button id="btnReg" class="ghost">注册</button>
+      <div class="kv" id="loginMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>设备</h2>
+      <div id="devList" class="kv">未登录</div>
+      <div style="margin-top:8px"><button class="ghost" onclick="refreshDevices()">刷新</button></div>
+    </div>
+
+    <div class="card">
+      <h2>手动控制台（绕过 Agent 直控工具）</h2>
+      <div>
+        <button class="ok" onclick="manual('led.set',{on:true})">LED 开</button>
+        <button class="off" onclick="manual('led.set',{on:false})">LED 关</button>
+        <button class="ok" onclick="manual('fan.set',{state:true})">风扇 开</button>
+        <button class="off" onclick="manual('fan.set',{state:false})">风扇 关</button>
+        <button class="ghost" onclick="manual('relay.set',{ch:0,state:true},true)">继电器0 开(需确认)</button>
+        <button class="ghost" onclick="manual('relay.set',{ch:0,state:false})">继电器0 关</button>
+        <button class="ghost" onclick="manual('dht.read',{})">读温湿度</button>
+      </div>
+      <div class="kv" id="manualMsg" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h2>原始事件流</h2>
+      <div id="events"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" style="height:100%">
+      <h2>Agent 对话</h2>
+      <div id="chat"></div>
+      <div class="bar">
+        <input id="say" placeholder="试试：把风扇打开 / 寝室现在多少度？/ 太热了，想办法让我凉快点" onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()">发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let TOKEN = localStorage.getItem('token') || '';
+let USER = localStorage.getItem('username') || '';
+let WS = null, devices = [];
+
+function logEvent(obj){
+  const el = $('events');
+  el.innerHTML = `<div>${new Date().toLocaleTimeString()} ${JSON.stringify(obj)}</div>` + el.innerHTML;
+}
+
+async function api(path, opts={}){
+  // 相对路径：兼容挂载在 / 或 /piagent/ 等任意前缀下（经 nginx 反代）
+  const url = path.replace(/^\//, '');
+  opts.headers = Object.assign({'Content-Type':'application/json'},
+    TOKEN?{Authorization:'Bearer '+TOKEN}:{}, opts.headers||{});
+  const r = await fetch(url, opts);
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.detail || r.statusText);
+  return data;
+}
+
+async function doAuth(reg){
+  try{
+    const d = await api('/api/auth/'+(reg?'register':'login'),
+      {method:'POST', body:JSON.stringify({username:$('u').value, password:$('p').value})});
+    TOKEN=d.token; USER=d.username;
+    localStorage.setItem('token',TOKEN); localStorage.setItem('username',USER);
+    $('loginMsg').textContent = '已登录：'+USER;
+    connectWS(); refreshDevices();
+  }catch(e){ $('loginMsg').textContent = '失败：'+e.message; }
+}
+$('btnLogin').onclick=()=>doAuth(false); $('btnReg').onclick=()=>doAuth(true);
+
+function connectWS(){
+  if(WS) try{WS.close()}catch(e){}
+  const proto = location.protocol==='https:'?'wss':'ws';
+  const base = location.pathname.replace(/\/$/,'');   // "" 或 "/piagent"
+  WS = new WebSocket(`${proto}://${location.host}${base}/ws/user?token=${TOKEN}`);
+  WS.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    logEvent(m);
+    if(m.type==='hello'){ devices=m.devices; renderDevices(); }
+    if(m.type==='cmd_ack') addMsg('sys', `指令已送达设备（${m.id}），Agent 处理中…`);
+    if(m.type==='result') addMsg('agent', m.text, m.actions);
+    if(m.type==='cmd_error') addMsg('sys', '失败：'+(m.message||m.code));
+    if(m.type==='error') addMsg('sys', '错误：'+(m.message||m.code));
+    if(m.type==='device_status'){ refreshDevices(); addMsg('sys', `设备 ${m.device_id} ${m.online?'上线':'离线'}`);}
+    if(m.type==='telemetry'){ refreshDevices(); }
+  };
+  WS.onclose = ()=> setTimeout(()=>{ if(TOKEN) connectWS(); }, 3000);
+}
+
+async function refreshDevices(){
+  if(!TOKEN) return;
+  try{ devices = await api('/api/devices'); renderDevices(); }catch(e){ /*token 过期*/ }
+}
+function renderDevices(){
+  $('devList').innerHTML = devices.length? devices.map(d=>`
+    <div style="margin-bottom:8px">
+      <b>${d.device_id}</b> <span class="pill ${d.online?'on':'off'}">${d.online?'在线':'离线'}</span><br>
+      工具: ${d.caps.join(', ')||'-'}<br>
+      ${d.telemetry?`遥测: ${JSON.stringify(d.telemetry)}`:''}
+    </div>`).join('') : '（没有绑定设备，请先在服务端 add-device 并 bind）';
+}
+setInterval(refreshDevices, 5000);
+
+function addMsg(role, text, actions){
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  const who = role==='user'?'你':role==='agent'?'Agent':'系统';
+  div.innerHTML=`<div class="who">${who}</div><div>${String(text).replace(/</g,'&lt;')}</div>`
+    + (actions&&actions.length?`<div class="act">⚙ ${actions.join(' · ')}</div>`:'');
+  $('chat').appendChild(div); $('chat').scrollTop=1e9;
+}
+
+function sendChat(){
+  const t=$('say').value.trim(); if(!t||!WS) return;
+  $('say').value=''; addMsg('user',t);
+  WS.send(JSON.stringify({type:'chat', text:t}));
+}
+
+async function manual(tool, args, confirm=false){
+  if(!devices.length){ $('manualMsg').textContent='没有可用设备'; return; }
+  const dev = devices.find(d=>d.online)||devices[0];
+  $('manualMsg').textContent = `调用 ${tool}(${JSON.stringify(args)}) …`;
+  try{
+    const r = await api(`/api/devices/${dev.device_id}/command`,
+      {method:'POST', body:JSON.stringify({tool,args,confirmed:confirm})});
+    $('manualMsg').textContent = r.ok===false
+      ? `✗ ${r.text||'执行失败'}`
+      : `✓ ${r.text||JSON.stringify(r)}`;
+  }catch(e){ $('manualMsg').textContent='✗ '+e.message; }
+}
+
+if(TOKEN){ $('loginMsg').textContent='已登录：'+USER; connectWS(); refreshDevices(); }
+</script>
+</body>
+</html>

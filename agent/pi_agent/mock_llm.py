@@ -6,6 +6,8 @@
 import json
 import re
 
+from .mcp_client import llm_tool_name
+
 
 def _tool_call(call_id: str, name: str, args: dict) -> dict:
     return {
@@ -64,19 +66,22 @@ async def mock_chat(messages: list, tools: list | None = None) -> dict:
     low = user_text.lower()
 
     def want(name: str) -> bool:
-        return name in available
+        return llm_tool_name(name) in available
 
+    if re.search(r"舵机|servo", low) and want("servo.set"):
+        return _tool_call("call_mock_1", llm_tool_name("servo.set"),
+                          {"angle": 90 if _turn_on(low) else 0})
     if re.search(r"风扇|吹风|凉快", low) and want("fan.set"):
-        return _tool_call("call_mock_1", "fan.set", {"state": _turn_on(low)})
+        return _tool_call("call_mock_1", llm_tool_name("fan.set"), {"state": _turn_on(low)})
     if re.search(r"灯|led|亮", low) and want("led.set"):
-        return _tool_call("call_mock_1", "led.set", {"on": _turn_on(low)})
+        return _tool_call("call_mock_1", llm_tool_name("led.set"), {"on": _turn_on(low)})
     if re.search(r"继电器|relay", low) and want("relay.set"):
-        return _tool_call("call_mock_1", "relay.set",
+        return _tool_call("call_mock_1", llm_tool_name("relay.set"),
                           {"ch": 0, "state": _turn_on(low)})
     if re.search(r"温|湿度|热|冷|多少度|sensor", low) and want("dht.read"):
-        return _tool_call("call_mock_1", "dht.read", {})
+        return _tool_call("call_mock_1", llm_tool_name("dht.read"), {})
 
     return _final(
-        "（mock 模式）当前是离线规则模式，我只能识别风扇/灯/继电器/温湿度相关指令。"
+        "（mock 模式）当前是离线规则模式，我只能识别舵机/风扇/灯/继电器/温湿度相关指令。"
         "在 VPS 配置 LLM API Key 后即可获得完整的自然语言能力。"
     )

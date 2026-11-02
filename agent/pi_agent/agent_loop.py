@@ -45,7 +45,8 @@ async def run_agent_loop(text: str, mcp, llm, cfg, confirmed: bool = False) -> d
 
             for tc in tool_calls:
                 fn = tc["function"]
-                name = fn["name"]
+                # LLM 收到的是净化名（fan_set），执行前映射回真实 MCP 工具名（fan.set）
+                name = mcp.real_name(fn["name"])
                 try:
                     args = json.loads(fn.get("arguments") or "{}")
                     if not isinstance(args, dict):

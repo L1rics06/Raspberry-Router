@@ -2,8 +2,9 @@
 
 > **对接双方**：模块 C（Agent，`agent/`）与模块 D（设备适配，`devices/`）。
 > Agent 对硬件**零感知**：只认"工具清单"，加设备/换设备不改 Agent 代码。
-> 参考实现：`devices/mock_mcp_server.py`（模拟硬件，当前已在线跑通全链路）。
-> 版本：v1.0 · 2026-10-26
+> 参考实现：`devices/mock_mcp_server.py`（全模拟）与 `devices/device_mcp_server.py`
+> （舵机真机 + 其余模拟，当前树莓派演示形态）。
+> 版本：v1.1 · 2026-11-02（v1.0 基础上新增 servo.set）
 
 ## 1. 接入方式
 
@@ -44,19 +45,44 @@ args = ["/opt/piagent/devices/device_mcp_server.py"]
 4. **禁止**：工具内不得联网、不得长阻塞（>5s 的动作拆成"启动+查询"两个工具）；
 5. **日志**：stdout 被 MCP 协议占用，**日志一律打 stderr**。
 
-## 3. 首批工具清单（v1，mock 已实现，D 按此用 gpiozero 替换）
+## 3. 首批工具清单（v1.1，mock 与真机版均已实现）
 
 | 工具 | 参数 | 返回示例 | 高危 |
 | --- | --- | --- | --- |
 | `led.set` | `on: bool` | `{"ok":true,"led":true,"detail":"LED 已点亮"}` | |
 | `fan.set` | `state: bool` | `{"ok":true,"fan":true,"detail":"风扇已打开"}` | |
 | `relay.set` | `ch: int(0-3), state: bool` | `{"ok":true,"ch":0,"state":true}` | ⚠️ 是 |
+| `servo.set` | `angle: int(0-180)` | `{"ok":true,"servo":90,"mode":"gpio","detail":"舵机已转到 90°"}` | |
 | `dht.read` | （无） | `{"temp":26.4,"hum":58}` | |
-| `devices.status` | （无） | 全部设备当前状态快照（调试用） | |
+| `devices.status` | （无） | 全部设备当前状态快照（含 `servo_mode`） | |
+
+`servo.set` 角度语义（写进工具描述，供 LLM 映射"开/关"）：**90=打开，0=关闭/复位，180=另一侧最大**。
+真机版返回的 `mode` 字段标明 `"gpio"`（真实硬件）或 `"simulated"`（降级模拟）。
 
 高危说明：`relay.set` 在 Agent 配置的 `confirm_tools` 名单里——**聊天指令永远不执行它**，只有手动控制台带 `confirmed=true` 的直控请求才放行。新增高危工具时同步改 `agent/config.toml`。
 
-## 4. 真机替换指引（分工 D）
+### LLM 工具名净化说明
+
+DeepSeek 等提供商要求函数名只含 `[a-zA-Z0-9_-]`，Agent 会自动把 `fan.set` 净化为
+`fan_set` 发给 LLM、执行时再映射回真实工具名。设备侧**完全无感**，继续用点分命名即可。
+
+## 4. 真机版（device_mcp_server.py，舵机 SG90）
+
+**接线**（三根线）：
+
+| SG90 线 | 接树莓派 |
+| --- | --- |
+| 信号（橙/黄） | GPIO17（环境变量 `PIAGENT_SERVO_PIN` 可改） |
+| VCC（红） | 5V（演示轻载可取自 Pi；带负载请外部 5V 供电） |
+| GND（棕） | GND（外部供电时必须共地） |
+
+**依赖**：`pip install -r devices/requirements-device.txt`（gpiozero + rpi-lgpio；
+也可 `sudo apt install python3-gpiozero python3-rpi-lgpio`）。
+
+**行为**：检测到 `/dev/gpiomem` 且初始化成功 → 舵机走真实 GPIO（`mode:"gpio"`）；
+否则（开发机/VPS/未启用 GPIO/设 `PIAGENT_SERVO_SIM=1`）自动降级为模拟（`mode:"simulated"`），
+工具与返回结构不变，`e2e_test.py` 在两种模式下都能全绿。LED/风扇/继电器/温湿度在本版中
+仍为模拟实现，后续按同表工具名逐一用 gpiozero/smbus2 替换即可。
 
 | 事项 | 要求 |
 | --- | --- |
@@ -64,7 +90,7 @@ args = ["/opt/piagent/devices/device_mcp_server.py"]
 | I2C（OLED/AHT20） | `smbus2`，先 `raspi-config` 开 I2C |
 | 电平 | GPIO 坚持 3.3V；5V 信号（HC-SR04 Echo）分压；共地；**不碰 220V** |
 | 位置 | 真机实现放 `devices/device_mcp_server.py`，保持上表工具名与参数不变，Agent 与上层零改动 |
-| 自测 | `python devices/mock_mcp_server.py` 换成你的实现后，直接跑 `scripts/e2e_test.py` 全绿即接入成功 |
+| 自测 | `python devices/device_mcp_server.py` 独立启动不报错后，跑 `scripts/e2e_test.py` 全绿即接入成功 |
 
 ## 5. 验收标准（分工 D 的 DoD）
 
