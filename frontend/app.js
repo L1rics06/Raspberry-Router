@@ -22,7 +22,9 @@ const fmtAgo = (ts) => {
   if (d < 60) return "刚刚";
   if (d < 3600) return `${Math.floor(d / 60)} 分钟前`;
   if (d < 86400) return `${Math.floor(d / 3600)} 小时前`;
-  return `${Math.floor(d / 86400)} 天前`;
+  // 超过一周改用绝对日期，避免"340 天前"这类无意义读数
+  if (d < 7 * 86400) return `${Math.floor(d / 86400)} 天前`;
+  return new Date(ts * 1000).toLocaleDateString("zh-CN");
 };
 
 /* REST 基址：页面在 / 或 /piagent/ 下都能正确解析为相对路径 */
@@ -80,7 +82,12 @@ function toast(text, type = "") {
   el.className = `toast ${type}`;
   el.textContent = text;
   $("#toasts").appendChild(el);
-  setTimeout(() => el.remove(), 3600);
+  // 退场快于入场（160ms vs 300ms），同方向滑出
+  setTimeout(() => {
+    el.classList.add("out");
+    el.addEventListener("transitionend", () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 400); // transitionend 兜底
+  }, 3400);
 }
 
 let _modalResolve = null;
@@ -92,7 +99,12 @@ function confirmModal(text) {
   });
 }
 function _closeModal(v) {
-  $("#modal-mask").classList.add("hidden");
+  const mask = $("#modal-mask");
+  mask.classList.add("closing");
+  setTimeout(() => {
+    mask.classList.add("hidden");
+    mask.classList.remove("closing");
+  }, 170);
   if (_modalResolve) { _modalResolve(v); _modalResolve = null; }
 }
 
@@ -156,6 +168,8 @@ function enterApp() {
   $("#user-avatar").textContent = store.username.slice(0, 1).toUpperCase();
   wsConnect();
   refreshDevices();
+  positionTabIndicator();
+  setTimeout(positionTabIndicator, 60); // 布局稳定后再校准一次
 }
 
 async function refreshDevices() {
@@ -291,21 +305,40 @@ function handleEvent(m) {
 
 /* ================= 渲染：设备侧栏 / 顶栏 ================= */
 
+let _devListKey = "";   // 设备成员/在线态指纹：变化才重建（带错峰），遥测刷新只改文本
+
 function renderDevices() {
   const list = $("#device-list");
-  if (!store.devices.length) {
-    list.innerHTML = `<div class="empty-note" style="padding:16px">还没有绑定设备<br><span style="font-size:12px">点击下方按钮添加</span></div>`;
-  } else {
-    list.innerHTML = store.devices.map((d) => `
-      <div class="device-card ${d.device_id === store.current ? "active" : ""}" data-id="${esc(d.device_id)}">
-        <div class="row1"><span class="dot ${d.online ? "on" : "off"}"></span>${esc(d.device_id)}</div>
-        <div class="row2">
-          <span>${d.telemetry && d.telemetry.temp != null ? `🌡 ${d.telemetry.temp}°C` : "无遥测"}</span>
-          <span>${fmtAgo(d.last_seen)}</span>
-        </div>
-      </div>`).join("");
-    $$(".device-card", list).forEach((el) =>
-      el.addEventListener("click", () => selectDevice(el.dataset.id)));
+  const key = store.devices.map((d) => `${d.device_id}:${d.online ? 1 : 0}`).join("|");
+
+  if (key !== _devListKey) {
+    _devListKey = key;
+    if (!store.devices.length) {
+      list.classList.remove("stagger");
+      list.innerHTML = `<div class="empty-note" style="padding:16px">还没有绑定设备<br><span style="font-size:12px">点击下方按钮添加</span></div>`;
+    } else {
+      list.classList.add("stagger");
+      list.innerHTML = store.devices.map((d, i) => `
+        <div class="device-card ${d.device_id === store.current ? "active" : ""}"
+             data-id="${esc(d.device_id)}" style="--i:${i}">
+          <div class="row1"><span class="dot ${d.online ? "on" : "off"}"></span>${esc(d.device_id)}</div>
+          <div class="row2">
+            <span class="telo">${d.telemetry && d.telemetry.temp != null ? `🌡 ${d.telemetry.temp}°C` : "无遥测"}</span>
+            <span class="ago">${fmtAgo(d.last_seen)}</span>
+          </div>
+        </div>`).join("");
+      $$(".device-card", list).forEach((el) =>
+        el.addEventListener("click", () => selectDevice(el.dataset.id)));
+    }
+  } else if (store.devices.length) {
+    // 纯遥测/时间刷新：定点更新文本，不重建节点（入场动画不重放）
+    for (const d of store.devices) {
+      const card = list.querySelector(`.device-card[data-id="${CSS.escape(d.device_id)}"]`);
+      if (!card) continue;
+      const t = d.telemetry;
+      $(".telo", card).textContent = t && t.temp != null ? `🌡 ${t.temp}°C` : "无遥测";
+      $(".ago", card).textContent = fmtAgo(d.last_seen);
+    }
   }
   $("#device-count").textContent = store.devices.length || "";
 
@@ -338,42 +371,69 @@ function selectDevice(id) {
 
 /* ================= 渲染：对话 ================= */
 
+let _chatKeySeq = 0;
+
+/* 增量渲染：只给新插入的消息做入场过渡（@starting-style），
+ * 旧消息节点不重建不重放动画；待定条目（思考中→结果）原地更新。 */
 function renderChat() {
   const box = $("#chat-box");
   const logs = store.chatLog.filter((x) => x.status !== "removed");
+
   if (!logs.length) {
-    box.innerHTML = $("#chat-empty")
-      ? `<div class="chat-empty" id="chat-empty">
-           <div class="chat-empty-logo">🤖</div>
-           <p>我是你的设备管家，试试对我说：</p>
-           <div class="hint-row">
-             <span class="chip clickable" data-fill="把风扇打开">把风扇打开</span>
-             <span class="chip clickable" data-fill="舵机转到 90 度">舵机转到 90 度</span>
-             <span class="chip clickable" data-fill="寝室现在多少度？">寝室现在多少度？</span>
-           </div>
-         </div>` : "";
-  } else {
-    box.innerHTML = logs.map((m) => {
-      if (m.role === "user") {
-        return `<div class="msg user"><div class="avatar">👤</div><div class="bubble">${esc(m.text)}</div></div>`;
-      }
-      let inner;
-      if (m.status === "pending" || m.status === "thinking") {
-        inner = `<span class="thinking"><i></i><i></i><i></i></span> Agent 正在思考…`;
-      } else {
-        inner = esc(m.text || (m.ok ? "完成" : "执行失败"));
-      }
-      const actions = (m.actions || []).map((a) =>
-        `<span class="chip action" title="${esc(a)}">⚙ ${esc(shortAction(a))}</span>`).join("");
-      return `<div class="msg ai">
-        <div class="avatar ai">🤖</div>
-        <div class="bubble ${m.status === "error" || m.ok === false ? "error" : ""}">
-          ${inner}${actions ? `<div class="msg-actions">${actions}</div>` : ""}
+    box.innerHTML = `
+      <div class="chat-empty" id="chat-empty">
+        <div class="chat-empty-logo">🤖</div>
+        <p>我是你的设备管家，试试对我说：</p>
+        <div class="hint-row">
+          <span class="chip clickable" data-fill="把风扇打开">把风扇打开</span>
+          <span class="chip clickable" data-fill="舵机转到 90 度">舵机转到 90 度</span>
+          <span class="chip clickable" data-fill="寝室现在多少度？">寝室现在多少度？</span>
         </div>
       </div>`;
-    }).join("");
+    box.scrollTop = box.scrollHeight;
+    return;
+  }
+
+  if ($("#chat-empty")) box.innerHTML = "";
+
+  const seen = new Set();
+  for (const m of logs) {
+    if (!m._key) m._key = ++_chatKeySeq;
+    seen.add(m._key);
+    let el = box.querySelector(`.msg[data-key="${m._key}"]`);
+    if (!el) {
+      el = document.createElement("div");
+      el.dataset.key = m._key;
+      box.appendChild(el);
+    }
+    el.className = m.role === "user" ? "msg user" : "msg ai";
+    const html = msgInnerHtml(m);
+    if (el.innerHTML !== html) el.innerHTML = html;   // 思考中→结果 原地换内容
+  }
+  // 移除已不存在的节点（清空会话/被标记 removed）
+  for (const el of [...box.children]) {
+    if (el.classList.contains("chat-empty")) continue;
+    if (!seen.has(Number(el.dataset.key))) el.remove();
   }
   box.scrollTop = box.scrollHeight;
+}
+
+function msgInnerHtml(m) {
+  if (m.role === "user") {
+    return `<div class="avatar">👤</div><div class="bubble">${esc(m.text)}</div>`;
+  }
+  let inner;
+  if (m.status === "pending" || m.status === "thinking") {
+    inner = `<span class="thinking"><i></i><i></i><i></i></span> Agent 正在思考…`;
+  } else {
+    inner = esc(m.text || (m.ok ? "完成" : "执行失败"));
+  }
+  const actions = (m.actions || []).map((a, i) =>
+    `<span class="chip action" style="--i:${i}" title="${esc(a)}">⚙ ${esc(shortAction(a))}</span>`).join("");
+  return `<div class="avatar ai">🤖</div>
+    <div class="bubble ${m.status === "error" || m.ok === false ? "error" : ""}">
+      ${inner}${actions ? `<div class="msg-actions">${actions}</div>` : ""}
+    </div>`;
 }
 
 function shortAction(a) {
@@ -418,18 +478,29 @@ function sendChat() {
 
 const CONFIRM_HINT = /确认|高危|白名单/;
 
-function renderManual() {
+let _manualKey = "";    // 设备/在线/工具集指纹：不变则不重建（遥测刷新频繁）
+
+function renderManual(force = false) {
   const box = $("#manual-controls");
   const empty = $("#manual-empty");
   const d = currentDevice();
+  const key = d ? `${d.device_id}|${d.online}|${(d.caps || []).join(",")}` : "";
+
+  if (!force && key === _manualKey) return;   // 高频心跳路径直接跳过
+  _manualKey = key;
+
   if (!d || !d.online || !(d.caps || []).length) {
+    box.classList.remove("stagger");
     box.innerHTML = "";
     empty.textContent = !d ? "未选择设备" : (!d.online ? "设备不在线，无法手动控制" : "设备未上报任何工具");
     empty.classList.remove("hidden");
     return;
   }
   empty.classList.add("hidden");
-  box.innerHTML = (d.caps || []).map(renderToolCard).join("");
+  // 指纹变化（切设备/上线）→ 错峰入场；工具成功后的强制刷新 → 直接重建不重放动画
+  box.classList.toggle("stagger", !force);
+  box.innerHTML = (d.caps || []).map((cap, i) =>
+    renderToolCard(cap).replace('class="tool-card"', `class="tool-card" style="--i:${i}"`)).join("");
   bindToolEvents();
 }
 
@@ -564,7 +635,7 @@ async function runTool(tool, args, askConfirm) {
       if (tool === "led.set") mem[tool] = args.on;
       if (tool === "fan.set") mem[tool] = args.state;
       if (tool === "servo.set") mem[tool] = args.angle;
-      renderManual();
+      renderManual(true);
     }
   } catch (e) {
     resultBox.classList.add("bad");
@@ -604,13 +675,15 @@ async function loadHistory() {
       list.innerHTML = `<div class="empty-note">暂无历史记录</div>`;
       return;
     }
-    list.innerHTML = rows.map((r) => {
+    list.innerHTML = rows.map((r, i) => {
       const isChat = r.kind === "chat";
       const ask = isChat ? (r.payload && r.payload.text) || "" : JSON.stringify(r.payload || {});
       const dur = r.finished_at && r.created_at ? `耗时 ${(r.finished_at - r.created_at).toFixed(1)}s` : "";
       const acts = (r.actions || []).map((a) =>
         `<span class="chip action">${esc(shortAction(a))}</span>`).join(" ");
-      return `<div class="history-item">
+      // 错峰索引封顶，长列表不会拖出长长的动画尾巴
+      const idx = Math.min(i, 7);
+      return `<div class="history-item" style="--i:${idx}">
         <div class="row1">
           <span class="kind ${esc(r.kind)}">${isChat ? "对话" : "直控"}</span>
           <b>${esc(r.device_id)}</b>
@@ -624,6 +697,7 @@ async function loadHistory() {
         </div>
       </div>`;
     }).join("");
+    list.classList.add("stagger");
   } catch (e) {
     list.innerHTML = `<div class="empty-note">加载失败：${esc(e.message)}</div>`;
   }
@@ -631,15 +705,30 @@ async function loadHistory() {
 
 /* ================= Tab 切换 ================= */
 
+function positionTabIndicator() {
+  const active = $(".tab.active");
+  const ind = $(".tab-indicator");
+  if (!active || !ind) return;
+  ind.style.width = `${active.offsetWidth}px`;
+  ind.style.transform = `translateX(${active.offsetLeft}px)`;
+}
+
 function switchTab(name) {
   store.tab = name;
   $$(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
   $$(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${name}`));
+  positionTabIndicator();
   if (name === "manual") renderManual();
   if (name === "history") loadHistory();
 }
 
 /* ================= 绑定设备 ================= */
+
+function _closeBind() {
+  const m = $("#bind-mask");
+  m.classList.add("closing");
+  setTimeout(() => { m.classList.add("hidden"); m.classList.remove("closing"); }, 170);
+}
 
 function openBind() {
   $("#bind-id").value = "";
@@ -656,7 +745,7 @@ async function submitBind() {
   if (!device_id || !device_token) { err.textContent = "请填写完整"; return; }
   try {
     await api("api/devices/bind", { method: "POST", body: { device_id, device_token } });
-    $("#bind-mask").classList.add("hidden");
+    _closeBind();
     toast(`设备 ${device_id} 绑定成功`, "ok");
     refreshDevices();
   } catch (e) {
@@ -686,13 +775,15 @@ function bindEvents() {
   });
 
   $("#btn-bind").addEventListener("click", openBind);
-  $("#bind-cancel").addEventListener("click", () => $("#bind-mask").classList.add("hidden"));
+  $("#bind-cancel").addEventListener("click", _closeBind);
   $("#bind-ok").addEventListener("click", submitBind);
 
   $("#modal-cancel").addEventListener("click", () => _closeModal(false));
   $("#modal-ok").addEventListener("click", () => _closeModal(true));
 
   $("#btn-history-refresh").addEventListener("click", loadHistory);
+
+  window.addEventListener("resize", positionTabIndicator);
 
   // WS 断开时的 REST 兜底刷新
   setInterval(() => { if (store.token && !store.wsOk) refreshDevices(); }, 30000);
