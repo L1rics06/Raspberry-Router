@@ -7,40 +7,41 @@
 
 | 项 | 值 |
 | --- | --- |
-| 生产地址 | `http://<VPS地址>/piagent`（nginx 反代 → 网关 :8000；实际地址与账号见团队群） |
+| 生产地址 | `http://<VPS地址>/piagent`（nginx 反代 → 网关 :8000；实际地址见团队群） |
 | 本地联调 | `http://127.0.0.1:8000`（`server/` 目录 `uvicorn app.main:app`） |
 | 协议 | HTTP REST（JSON）+ WebSocket，全部 UTF-8 |
-| 鉴权 | JWT Bearer：登录后拿 `token`，之后每个请求带 `Authorization: Bearer <token>` |
-| Token 有效期 | 7 天，过期返回 401，前端静默重新登录即可 |
-| CORS | 已全开放（开发期 vite 热更新无障碍），生产可收紧 |
-| 调试控制台 | 浏览器打开生产地址根路径即可（内置联调页面，登录+聊天+手动控制） |
-| 体验账号 | 见团队群（联调账号已绑定测试设备 `pi-dorm-01`） |
+| 鉴权 | **访问令牌换 JWT**：登录页输入 `pat-xxx` 访问令牌 → `POST /api/auth/token-login` 换 JWT；之后每个请求带 `Authorization: Bearer <jwt>` |
+| 令牌签发 | 仅运维在服务端 `manage.py add-user <名>` / `manage.py token <名>` 生成，只显示一次，线下交付 |
+| Token 有效期 | 7 天，过期返回 401，前端回登录页重新输入访问令牌 |
+| 注册/密码登录 | **已关闭**（403）——防止任何访客自行开户操控设备 |
+| CORS | 已全开放（开发期热更新无障碍），生产可收紧 |
+| 调试控制台 | `/debug.html`（内置联调页面，同样走令牌登录） |
+| 体验令牌 | 见团队群（对应演示账号，已绑定测试设备 `pi-dorm-01`） |
 
 30 秒上手（curl）：
 
 ```bash
 BASE=http://<VPS地址>/piagent     # 或本地 http://127.0.0.1:8000
-TOKEN=$(curl -s $BASE/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"username":"<用户名>","password":"<密码>"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
-curl -s $BASE/api/devices -H "Authorization: Bearer $TOKEN"
+JWT=$(curl -s $BASE/api/auth/token-login -H 'Content-Type: application/json' \
+  -d '{"token":"pat-xxxx"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+curl -s $BASE/api/devices -H "Authorization: Bearer $JWT"
 ```
 
 ---
 
 ## 1. REST API
 
-### 1.1 注册 `POST /api/auth/register`
+### 1.1 令牌登录 `POST /api/auth/token-login`
 
-Body：`{"username": "alice", "password": "alice123"}`（用户名 2-32 字符，密码 6-64 字符）
+Body：`{"token": "pat-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}`（访问令牌，运维签发）
 
-- `201` `{"id": 2, "username": "alice", "token": "<jwt>"}`
-- `409` `{"detail": "用户名已被占用"}` / `422` 字段不合法
+- `200` `{"id": 1, "username": "demo", "token": "<jwt>"}`
+- `401` `{"detail": "访问令牌无效"}`（失败响应带固定延时，防令牌枚举）
 
-注册即登录，直接返回 token。
+### 1.2 注册 / 密码登录 —— 已关闭
 
-### 1.2 登录 `POST /api/auth/login`
-
-Body 同上。`200` 同上结构；`401` `{"detail": "用户名或密码错误"}`。
+`POST /api/auth/register` 与 `POST /api/auth/login` 恒返回 `403`（注册已关闭 / 密码登录已停用）。
+安全模型：设备控制权限只随访问令牌发放，令牌可随时由运维轮换（旧令牌立即失效）。
 
 ### 1.3 绑定设备 `POST /api/devices/bind` 🔒
 

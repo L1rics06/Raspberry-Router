@@ -16,16 +16,13 @@
     <h1>PiAgent</h1>
     <p class="auth-sub">基于树莓派的 AI Agent 物联网控制平台</p>
     <form id="auth-form" autocomplete="off">
-      <label class="field">用户名
-        <input id="auth-username" required minlength="2" maxlength="32" placeholder="2-32 个字符">
-      </label>
-      <label class="field">密码
-        <input id="auth-password" type="password" required minlength="6" maxlength="64" placeholder="6-64 个字符">
+      <label class="field">访问令牌
+        <input id="auth-token" required minlength="8" maxlength="128" placeholder="pat-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
       </label>
       <div id="auth-error" class="auth-error"></div>
-      <button class="btn primary block" id="auth-submit" type="submit">登 录</button>
+      <button class="btn primary block" id="auth-submit" type="submit">进入控制台</button>
     </form>
-    <div class="auth-switch">没有账号？<a href="#" id="auth-mode-switch">注册新账号</a></div>
+    <div class="auth-switch">令牌由服务端运维签发，仅限授权用户使用</div>
   </div>
   <p class="auth-foot">树莓派 Agent · VPS 网关 · MCP 设备工具</p>
 </div>

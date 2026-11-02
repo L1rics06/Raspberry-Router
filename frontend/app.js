@@ -43,7 +43,6 @@ const store = {
   chatLog: [],              // {role:'user'|'ai', text, actions, status, id}
   busy: false,              // 同一设备指令串行：前端发送锁
   ws: null, wsOk: false, backoff: 1, wsTimer: null, pingTimer: null,
-  authMode: "login",        // login | register
   lastManual: {},           // device_id → {tool: 上次成功结果状态}（开关类记忆用）
 };
 
@@ -65,12 +64,14 @@ async function api(path, { method = "GET", body } = {}) {
   } catch (e) {
     throw new Error("网络请求失败，请检查连接");
   }
+  let data = {};
+  try { data = await res.json(); } catch { /* 空响应 */ }
   if (res.status === 401) {
+    // 登录接口自身的 401（令牌无效）交给调用方展示，不触发全局登出（路径为相对形式）
+    if (path.includes("api/auth/")) throw new Error(data.detail || "访问令牌无效");
     logout("登录已过期，请重新登录");
     throw new Error("未登录");
   }
-  let data = {};
-  try { data = await res.json(); } catch { /* 空响应 */ }
   if (!res.ok) throw new Error(data.detail || `请求失败 (${res.status})`);
   return data;
 }
@@ -108,7 +109,7 @@ function _closeModal(v) {
   if (_modalResolve) { _modalResolve(v); _modalResolve = null; }
 }
 
-/* ================= 登录 / 注册 ================= */
+/* ================= 登录（访问令牌） ================= */
 
 function showAuth() {
   $("#app-view").classList.add("hidden");
@@ -116,27 +117,19 @@ function showAuth() {
   $("#auth-error").textContent = "";
 }
 
-function setAuthMode(mode) {
-  store.authMode = mode;
-  $("#auth-submit").textContent = mode === "login" ? "登 录" : "注 册";
-  $("#auth-mode-switch").textContent = mode === "login" ? "注册新账号" : "返回登录";
-  $("#auth-error").textContent = "";
-}
-
 async function submitAuth(e) {
   e.preventDefault();
-  const username = $("#auth-username").value.trim();
-  const password = $("#auth-password").value;
+  const token = $("#auth-token").value.trim();
   const err = $("#auth-error");
   err.textContent = "";
   $("#auth-submit").disabled = true;
   try {
-    const path = store.authMode === "login" ? "api/auth/login" : "api/auth/register";
-    const data = await api(path, { method: "POST", body: { username, password } });
+    const data = await api("api/auth/token-login", { method: "POST", body: { token } });
     store.token = data.token;
     store.username = data.username;
     localStorage.setItem("pia_token", data.token);
     localStorage.setItem("pia_user", data.username);
+    $("#auth-token").value = "";
     enterApp();
   } catch (ex) {
     err.textContent = ex.message;
@@ -757,10 +750,6 @@ async function submitBind() {
 
 function bindEvents() {
   $("#auth-form").addEventListener("submit", submitAuth);
-  $("#auth-mode-switch").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode(store.authMode === "login" ? "register" : "login");
-  });
   $("#btn-logout").addEventListener("click", (e) => { e.preventDefault(); logout(); });
 
   $$(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
@@ -790,6 +779,5 @@ function bindEvents() {
 }
 
 bindEvents();
-setAuthMode("login");
 if (store.token) enterApp();
 else showAuth();

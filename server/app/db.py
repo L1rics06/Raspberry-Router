@@ -14,11 +14,12 @@ _lock = threading.Lock()
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    username      TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    salt          TEXT NOT NULL,
-    created_at    REAL NOT NULL
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    username          TEXT UNIQUE NOT NULL,
+    password_hash     TEXT NOT NULL,
+    salt              TEXT NOT NULL,
+    access_token_hash TEXT,                       -- sha256(访问令牌)，token 登录用
+    created_at        REAL NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS devices (
@@ -55,6 +56,11 @@ def init_db() -> None:
     _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     _conn.row_factory = sqlite3.Row
     _conn.executescript(SCHEMA)
+    # 老库迁移：补充访问令牌列（新库建表时已含）
+    try:
+        _conn.execute("ALTER TABLE users ADD COLUMN access_token_hash TEXT")
+    except sqlite3.OperationalError:
+        pass  # 列已存在
     _conn.commit()
 
 
@@ -88,6 +94,17 @@ def get_user_by_name(username: str) -> sqlite3.Row | None:
 def get_user_by_id(user_id: int) -> sqlite3.Row | None:
     rows = _query("SELECT * FROM users WHERE id=?", (user_id,))
     return rows[0] if rows else None
+
+def set_user_access_token(user_id: int, token_hash: str | None) -> None:
+    """写入/轮换访问令牌哈希（传 None 则吊销）。"""
+    _exec("UPDATE users SET access_token_hash=? WHERE id=?", (token_hash, user_id))
+
+def get_user_by_access_token(token_hash: str) -> sqlite3.Row | None:
+    rows = _query("SELECT * FROM users WHERE access_token_hash=?", (token_hash,))
+    return rows[0] if rows else None
+
+def all_users() -> list[sqlite3.Row]:
+    return _query("SELECT id, username, access_token_hash, created_at FROM users ORDER BY id")
 
 
 # ---------------- devices ----------------

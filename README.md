@@ -47,14 +47,17 @@ docs/       项目文档 + 接口文档（api_frontend / protocol_pi_vps / mcp_t
 
 **线上环境（已部署，直接用）**
 
-- 用户界面 / 调试控制台：网关根路径为正式 UI，`/debug.html` 为联调控制台（地址与联调账号见团队群，不写入公开仓库）
-- 端到端验收：`python scripts/e2e_test.py <网关地址> <用户名> <密码>`
+- 用户界面 / 调试控制台：网关根路径为正式 UI，`/debug.html` 为联调控制台（地址与访问令牌见团队群，不写入公开仓库）
+- 登录方式：**访问令牌**（`pat-xxx`，运维 `manage.py add-user`/`token` 签发与轮换；注册与密码登录已关闭）
+- 端到端验收：`python scripts/e2e_test.py <网关地址> <访问令牌>`
 
 **本地全栈（三步）**
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r server/requirements.txt -r agent/requirements.txt
-cd server && ../.venv/bin/python manage.py add-user demo demo123456 && ../.venv/bin/python manage.py add-device pi-dorm-01 --owner demo
+cd server && ../.venv/bin/python manage.py add-user demo   # 记下打印的 pat- 访问令牌
+../.venv/bin/python manage.py add-device pi-dorm-01 --owner demo
+set -a; source server.env.example 里填好的三个 LLM 变量; set +a   # 或直接跳过（llm_mode="mock"）
 ../.venv/bin/uvicorn app.main:app --port 8000 &          # 网关
 cd ../agent && cp config.example.toml config.toml        # 填 token、llm_mode="mock"、mcp.command 用 venv python 绝对路径
 ../.venv/bin/python -m pi_agent &                        # Agent

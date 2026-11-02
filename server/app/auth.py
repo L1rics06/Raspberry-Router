@@ -67,3 +67,10 @@ def verify_device_token(device_id: str, token: str) -> bool:
     if not dev:
         return False
     return hmac.compare_digest(hash_device_token(token), dev["token_hash"])
+
+
+# ---------------- 用户访问令牌 ----------------
+
+def hash_access_token(token: str) -> str:
+    """与设备 token 同型：只存 sha256，明文令牌仅签发时展示一次。"""
+    return hashlib.sha256(token.encode()).hexdigest()

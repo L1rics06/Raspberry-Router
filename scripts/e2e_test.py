@@ -2,11 +2,12 @@
 """PiAgent 端到端验收脚本：模拟前端用户的完整操作路径。
 
 用法：
-    python scripts/e2e_test.py [网关地址] [用户名] [密码]
-    python scripts/e2e_test.py http://127.0.0.1:8000 demo demo123456
+    python scripts/e2e_test.py [网关地址] [访问令牌]
+    python scripts/e2e_test.py http://127.0.0.1:8000 pat-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-前置条件：网关已启动、测试用户已创建并绑定在线设备、Agent 已连上。
-覆盖：登录 → 设备列表 → 手动直控（含高危拒绝/确认） → WS 聊天（Agent+MCP） → 历史记录。
+访问令牌由服务端 manage.py add-user / manage.py token 签发。
+前置条件：网关已启动、令牌对应用户已绑定在线设备、Agent 已连上。
+覆盖：令牌登录 → 设备列表 → 手动直控（含高危拒绝/确认） → WS 聊天（Agent+MCP） → 历史记录。
 """
 import asyncio
 import json
@@ -17,8 +18,7 @@ import websockets
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000").rstrip("/")
 WS_BASE = BASE.replace("http://", "ws://").replace("https://", "wss://")
-USERNAME = sys.argv[2] if len(sys.argv) > 2 else "demo"
-PASSWORD = sys.argv[3] if len(sys.argv) > 3 else "demo123456"
+ACCESS_TOKEN = sys.argv[2] if len(sys.argv) > 2 else ""
 
 _passed = 0
 _failed = 0
@@ -46,13 +46,23 @@ async def wait_result(ws, want_id: str | None = None, timeout: float = 60) -> di
 
 
 async def main() -> None:
-    print(f"== PiAgent E2E 测试 ==\n网关: {BASE}  用户: {USERNAME}")
+    print(f"== PiAgent E2E 测试 ==\n网关: {BASE}")
+    if not ACCESS_TOKEN:
+        print("用法: python scripts/e2e_test.py <网关地址> <访问令牌>")
+        sys.exit(2)
 
     async with httpx.AsyncClient(timeout=60) as c:
-        # 1. 登录
-        r = await c.post(f"{BASE}/api/auth/login",
-                         json={"username": USERNAME, "password": PASSWORD})
-        check("登录", r.status_code == 200, r.text)
+        # 1. 令牌登录（注册与密码登录已关闭，此处同时验证其被拒）
+        r_reg = await c.post(f"{BASE}/api/auth/register",
+                             json={"username": "alice", "password": "alice123"})
+        r_pwd = await c.post(f"{BASE}/api/auth/login",
+                             json={"username": "demo", "password": "demo123456"})
+        check("注册已关闭", r_reg.status_code == 403, r_reg.text)
+        check("密码登录已停用", r_pwd.status_code == 403, r_pwd.text)
+
+        r = await c.post(f"{BASE}/api/auth/token-login",
+                         json={"token": ACCESS_TOKEN})
+        check("访问令牌登录", r.status_code == 200, r.text)
         token = r.json()["token"]
         auth = {"Authorization": f"Bearer {token}"}
 
@@ -128,6 +138,7 @@ async def main() -> None:
 
     print(f"\n== 结果: {_passed} 通过, {_failed} 失败 ==")
     sys.exit(1 if _failed else 0)
+
 
 
 if __name__ == "__main__":
