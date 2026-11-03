@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | VPS 通信网关（`server/`） | 2 | ✅ **完成并部署**（systemd 常驻；LLM 出口代理已接入 DeepSeek `deepseek-flash`） |
 | 树莓派 Agent（`agent/`） | 3 | ✅ **完成**（手写 tool-use 循环 + MCP 客户端 + 安全闸门，systemd 就绪） |
-| 设备 MCP Server（`devices/`） | 4 | ✅ mock 版 + **真机版**（`device_mcp_server.py`：SG90 舵机走真实 GPIO，其余工具模拟，无硬件自动降级） |
+| 设备 MCP Server（`devices/`） | 4 | ✅ mock 版 + **正式版已交付**（`device_mcp_server.py`：SG90 舵机走真实 GPIO，其余工具模拟，无硬件自动降级） |
 | 用户界面（`frontend/`） | 1 | ✅ **完成**（无构建纯静态 SPA：登录注册 / 设备面板 / 对话 / 手动控制 / 历史，由网关托管） |
 
 **全链路已跑通（真实大模型）**：本机模拟树莓派 --公网 WS--> VPS 网关 <--REST/WS-- 用户；
