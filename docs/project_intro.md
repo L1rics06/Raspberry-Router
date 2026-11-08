@@ -38,7 +38,7 @@ flowchart LR
     subgraph dorm["寝室（NAT 内网）"]
         subgraph rpi["树莓派 5"]
             AG["Agent 运行时：意图理解 · 任务规划 · 安全闸门"]
-            DEV["设备 MCP Server：relay.set / dht.read / servo.angle ..."]
+            DEV["设备 MCP Server：relay.set / dht.read / light.set ..."]
         end
         IN["传感器：温湿度 / 超声波 / 人体红外"]
         OUT["执行器：继电器 / 舵机 / LED / 风扇"]
@@ -160,7 +160,7 @@ flowchart LR
 | LED + 电阻 | GPIO | 执行器 | `led.set(on)` | 入门第一课 |
 | 继电器模块 | GPIO | 执行器 | `relay.set(ch, state)` | 只接 12V 以下负载 |
 | 12V 风扇 + 继电器 | GPIO | 执行器 | `fan.set(state)` | 主打演示道具 |
-| SG90 舵机 | PWM | 执行器 | `servo.set_angle(deg)` | 可做"物理开关拨杆" |
+| SG90 舵机 | PWM | 执行器 | `light.set(on:bool)` | 可做"物理开关拨杆" |
 | 有源蜂鸣器 | GPIO | 执行器 | `buzzer.beat(ms)` | 提醒类场景 |
 | SSD1306 OLED | I2C | 输出 | `oled.show(text)` | 设备状态屏 |
 | AHT20 / DHT22 | I2C / GPIO | 传感器 | `dht.read() → {temp, hum}` | I2C 型号更稳定 |
@@ -187,7 +187,7 @@ flowchart LR
 ```jsonc
 // Pi → VPS：连接建立后第一条，注册
 { "type": "register", "device_id": "pi-dorm-01", "token": "设备密钥",
-  "caps": ["relay", "dht", "servo"] }
+  "caps": ["relay.set", "dht.read", "light.set", "devices.status"] }
 
 // Pi → VPS：心跳（每 15s，可捎带遥测）
 { "type": "heartbeat", "telemetry": { "temp": 26.4, "hum": 58 } }
@@ -234,11 +234,11 @@ raspberry-agent/
 
 | 风险 | 影响 | 应对 |
 | --- | --- | --- |
-| 寝室工作日夜间断电断网 | 设备周期性离线 | systemd 开机自启 + 自动重连；校园网自动认证脚本；VPS 缓存离线指令待补发；进阶可加 UPS HAT |
+| 寝室工作日夜间断电断网 | 设备周期性离线 | systemd 开机自启 + 自动重连；校园网自动认证脚本；墙灯离线拒绝指令，恢复后不补发旧按压；进阶可加 UPS HAT |
 | 校园网认证账号不够 | 树莓派无法入网 | 架构上只需**出站**流量：手机热点、借道路由器均可，不需要公网 IP，也不占用入站资源 |
 | LLM 幻觉 / 误操作 | 硬件误动作 | 工具白名单 + 参数强校验；高危工具二次确认；演示负载全部低压 |
 | 电气安全 | 烧板 / 触电 | GPIO 坚持 3.3V 电平；5V 信号分压；共地；**全程不碰 220V** |
-| Pi 5 GPIO 库兼容 | 驱动不工作 | 统一用 gpiozero（lgpio 后端），禁用老 RPi.GPIO |
+| Pi 5 GPIO 库兼容 | 驱动不工作 | 数字外设用gpiozero/lgpio，SG90用RP1硬件PWM sysfs，禁用老 RPi.GPIO |
 | 四模块集成延期 | 联调爆炸 | 接口契约第一周冻结；mock 先行；每周固定联调 |
 
 ## 10. 团队分工总表

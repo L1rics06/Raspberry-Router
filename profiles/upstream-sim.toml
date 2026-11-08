@@ -1,0 +1,10 @@
+expected_mode = "sim"
+timeout_s = 15
+
+[mcp]
+command = "{python}"
+args = ["{bundle}/upstream_snapshot/devices/device_mcp_server.py", "--sim"]
+
+[contract]
+kind = "upstream_devices"
+status_tool = "devices.status"

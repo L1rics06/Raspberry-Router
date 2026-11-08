@@ -1,0 +1,75 @@
+{
+  "created_at": "2026-11-08T03:22:53.031298+00:00",
+  "hardware_verified": false,
+  "real_llm_verified": false,
+  "public_network_verified": false,
+  "checks": [
+    {
+      "name": "unit-tests",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "syntax",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "mcp-simulation",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "mcp-upstream-sim",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "servo-mcp-simulation",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "combined-mcp-simulation",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "upstream-selftest",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "combined-existing-contract",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    },
+    {
+      "name": "upstream-audit",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true
+    },
+    {
+      "name": "hardware-template-preflight",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true
+    },
+    {
+      "name": "local-demo",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

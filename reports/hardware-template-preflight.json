@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "kind": "preflight",
+  "created_at": "2026-11-08T11:22:48+08:00",
+  "expected_mode": "gpio",
+  "status": "BLOCKED",
+  "hardware_verified": false,
+  "checks": [
+    {
+      "name": "MCP解释器存在",
+      "status": "PASS",
+      "detail": "/tmp/rr-test-venv/bin/python"
+    },
+    {
+      "name": "MCP入口文件存在",
+      "status": "PASS",
+      "detail": [
+        "/home/l1rics/Projects/python/Raspberry-Router/devices/wall_light_mcp.py"
+      ]
+    },
+    {
+      "name": "真机配置不使用仿真入口",
+      "status": "PASS",
+      "detail": "本包已提供devices/wall_light_mcp.py真机入口"
+    },
+    {
+      "name": "运行于树莓派5 Linux",
+      "status": "BLOCKED",
+      "detail": "Linux"
+    },
+    {
+      "name": "墙灯驱动配置存在",
+      "status": "BLOCKED",
+      "detail": "[Errno 2] No such file or directory: '/home/l1rics/Projects/python/Raspberry-Router/configs/servo.local.toml'"
+    },
+    {
+      "name": "electrical交接文件存在",
+      "status": "BLOCKED",
+      "detail": "/home/l1rics/Projects/python/Raspberry-Router/handoff/electrical.local.json"
+    },
+    {
+      "name": "calibration交接文件存在",
+      "status": "BLOCKED",
+      "detail": "/home/l1rics/Projects/python/Raspberry-Router/handoff/calibration.local.toml"
+    },
+    {
+      "name": "模拟环境变量未残留",
+      "status": "PASS",
+      "detail": "检查mcp.env中的模拟开关"
+    }
+  ],
+  "findings": [],
+  "profile": "/home/l1rics/Projects/python/Raspberry-Router/profiles/hardware.example.toml",
+  "counts": {
+    "PASS": 4,
+    "FAIL": 0,
+    "BLOCKED": 4
+  }
+}

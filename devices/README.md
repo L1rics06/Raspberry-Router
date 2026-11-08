@@ -3,6 +3,8 @@
 > 把树莓派上的 LED、风扇、继电器、温湿度传感器封装成 **MCP 工具**，
 > 由分工3 的 Agent 通过 **stdio** 拉起并自动发现；Agent 对具体硬件零感知。
 
+SG90更新：先看 [上机步骤](../docs/01_使用步骤.md)；本页原有五工具的GPIO/I2C说明继续保留。wall_light_mcp.py只提供墙灯与状态，all_devices_mcp.py增加墙灯并保留原五工具；两者显式选择--gpio或--sim，硬件失败不降级。
+
 本目录是分工4 的交付物：**设备 MCP Server + 接线/引脚文档 + 工具清单 + 自检脚本**。
 工具契约见 [`docs/接口文档/mcp_tools_schema.md`](../docs/接口文档/mcp_tools_schema.md)，
 MCP 原理与实现说明见 [`docs/分工4-MCP搭建说明.md`](../docs/分工4-MCP搭建说明.md)。
@@ -251,6 +253,18 @@ def buzzer_beep(ms: int = 200) -> str:
         return _err(f"蜂鸣器控制失败: {e}")
 ```
 
-舵机（SG90）注意：Pi 5 上舵机 PWM 需要额外处理——`gpiozero.Servo` 依赖 pigpio，
-而 pigpio 对 Pi 5 的支持有限，lgpio 后端也不直接提供舵机所需 PWM。可改用
-`lgpio.tx_pwm` 软件 PWM 或外接 PWM 驱动板；建议作为进阶项，先把 LED/风扇/继电器/温湿度跑稳。
+舵机（SG90）已在wall_light_mcp.py实现，使用Pi5 RP1硬件PWM和内核sysfs，不依赖pigpio或RPi.GPIO。GPIO12为物理32脚，原LED继续使用BCM17，二者不冲突。
+
+## 12. SG90交付与验收
+
+| 项目 | 入口与状态 |
+|---|---|
+| PWM、动作及标定 | task4/pwm_driver.py、servo_control.py、servo_cli.py，软件完成 |
+| MCP与兼容 | wall_light_mcp.py、all_devices_mcp.py，仿真通过 |
+| 测试与文档 | 86项单元测试、50项本地链路检查、原32项契约均通过 |
+| 只读与动作验收 | scripts/e2e_test.py，指定device_id，默认只读，动作另加--actuate |
+| 真实设备 | 接线、环境部署、机构标定、实际开关及网关现场验收待执行 |
+
+接线为SG90红线→物理2脚5V、棕/黑线→物理6脚GND、信号→BCM12物理32脚。先空载确认，带负载欠压或重启时切换独立5V、负极共地，不能并联两个电源正极。
+
+完整命令见[使用步骤](../docs/01_使用步骤.md)，对接见[其他分工配合](../docs/02_与其他三人配合.md)。本页第10节未勾选的实际硬件项保留，不能以软件仿真代填。

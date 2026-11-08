@@ -1,0 +1,76 @@
+== PiAgent 设备 MCP 契约自检 ==
+Server: /home/l1rics/Projects/python/Raspberry-Router/upstream_snapshot/devices/device_mcp_server.py
+Python: /tmp/rr-test-venv/bin/python
+
+[1] MCP 握手 initialize
+  ✅ 握手成功并返回 serverInfo
+      server = piagent-devices 1.30.0 · protocol 2025-11-25
+
+[2] 工具发现 tools/list
+  ✅ 发现 ≥5 个工具
+  ✅ 工具 led.set 存在
+  ✅ 工具 fan.set 存在
+  ✅ 工具 relay.set 存在
+  ✅ 工具 dht.read 存在
+  ✅ 工具 devices.status 存在
+
+[3] 参数 schema 与契约一致
+  ✅ led.set 参数类型
+  ✅ led.set 必填参数
+  ✅ led.set 有描述
+  ✅ fan.set 参数类型
+  ✅ fan.set 必填参数
+  ✅ fan.set 有描述
+  ✅ relay.set 参数类型
+  ✅ relay.set 必填参数
+  ✅ relay.set 有描述
+  ✅ dht.read 参数类型
+  ✅ dht.read 必填参数
+  ✅ dht.read 有描述
+  ✅ devices.status 参数类型
+  ✅ devices.status 必填参数
+  ✅ devices.status 有描述
+
+[4] 执行器调用 tools/call
+  ✅ led.set(true) → ok/led=true
+  ✅ led.set(false) → ok/led=false
+  ✅ fan.set(true) → ok/fan=true
+  ✅ fan.set(false) → ok/fan=false
+
+[5] 继电器通道 + 越界保护
+  ✅ relay.set(0,true) → ok/ch=0
+  ✅ relay.set(99) 被拒绝（ok=false）
+
+[6] 传感器与状态快照
+  ✅ dht.read → ok + 数值合理
+  ✅ devices.status → 含 led/fan/relay/mode 且 mode=sim
+      状态快照: {"ok": true, "led": false, "fan": false, "relay": [true, false, false, false], "mode": "sim", "pins": {"led_pin": 17, "fan_pin": 27, "relay_pins": [5, 6, 13, 19], "active_high": true, "relay_active_high": true, "dht_backend": "aht20", "dht_bus": 1, "dht_addr": "0x38"}, "errors": {}, "ts": 1794108167.529}
+
+[7] 协议层参数校验（错误类型应被拒绝，而不是照单全收）
+  ✅ led.set(on={...}) 被拒绝
+  ✅ 未知工具调用返回协议错误
+
+== 结果: 32 通过, 0 失败 ==
+✅ 仿真验收通过：MCP 协议与工具契约正常（未验证真实接线）。
+2026-11-08 11:22:47,498 [device-mcp] INFO  运行在【仿真模式】——不驱动真实 GPIO（电脑联调/无硬件时正常）
+2026-11-08 11:22:47,498 [device-mcp] INFO  设备 MCP Server 已启动 | mode=sim | pins={"led_pin": 17, "fan_pin": 27, "relay_pins": [5, 6, 13, 19], "active_high": true, "relay_active_high": true, "dht_backend": "aht20", "dht_bus": 1, "dht_addr": "0x38"}
+2026-11-08 11:22:47,498 [device-mcp] INFO  工具: led.set / fan.set / relay.set / dht.read / devices.status
+2026-11-08 11:22:47,510 [device-mcp] INFO  Processing request of type ListToolsRequest
+2026-11-08 11:22:47,512 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,512 [device-mcp] INFO  LED 点亮
+2026-11-08 11:22:47,515 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,515 [device-mcp] INFO  LED 熄灭
+2026-11-08 11:22:47,517 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,517 [device-mcp] INFO  风扇 开始转动
+2026-11-08 11:22:47,519 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,519 [device-mcp] INFO  风扇 停止
+2026-11-08 11:22:47,522 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,522 [device-mcp] INFO  继电器 ch0 闭合
+2026-11-08 11:22:47,524 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,526 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,526 [device-mcp] INFO  温湿度 temp=25.8 hum=55.8
+2026-11-08 11:22:47,528 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,530 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,531 [device-mcp] INFO  Processing request of type CallToolRequest
+2026-11-08 11:22:47,531 [device-mcp] WARNING Tool 'not.a.tool' not listed, no validation will be performed
+2026-11-08 11:22:47,533 [device-mcp] INFO  已释放 GPIO / I2C 资源

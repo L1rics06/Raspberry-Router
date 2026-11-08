@@ -1,0 +1,23 @@
+{
+  "approved": false,
+  "operator": "",
+  "tested_at": "",
+  "servo_model": "SG90",
+  "servo_profile": "sg90_5v_v1",
+  "servo_voltage_min_v": 4.8,
+  "servo_voltage_max_v": 5.25,
+  "power_design_voltage_v": 5.0,
+  "power_source": "pi5_5v_header",
+  "physical_power_pin": 2,
+  "physical_ground_pin": 6,
+  "measured_voltage_v": null,
+  "measured_peak_current_a": null,
+  "power_adapter_rating_a": null,
+  "servo_gpio_bcm": 12,
+  "physical_signal_pin": 32,
+  "common_ground_checked": false,
+  "signal_compatible": false,
+  "power_test_passed": false,
+  "pin_conflict_checked": false,
+  "notes": "SG90红线接Pi物理2脚5V、棕/黑线接物理6脚GND、橙线接物理32脚BCM12；先空载后带开关负载，Pi欠压或重启时改独立5V共地，不并联正极"
+}

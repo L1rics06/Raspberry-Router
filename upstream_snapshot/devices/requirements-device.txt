@@ -1,0 +1,4 @@
+# 真机版设备 MCP Server（devices/device_mcp_server.py）依赖 —— 仅树莓派上安装
+# 树莓派 OS 也可用 apt 安装：sudo apt install python3-gpiozero python3-rpi-lgpio
+gpiozero>=2.0
+rpi-lgpio>=0.6

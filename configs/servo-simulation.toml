@@ -1,0 +1,22 @@
+# 仅软件测试使用，fixture标记使本配置无法用于真实GPIO
+fixture = true
+servo_model = "SG90"
+servo_profile = "sg90_5v_v1"
+power_nominal_v = 5.0
+gpio_bcm = 12
+physical_pin = 32
+pwm_channel = 0
+frequency_hz = 50
+step_us = 10
+frame_s = 0.02
+min_us = 1400
+max_us = 1600
+home_us = 1500
+on_us = 1450
+off_us = 1550
+wait_s = 0.35
+calibrated = true
+clearance_verified = true
+switch_type = "single_rocker"
+operator = "simulation fixture"
+tested_at = "simulation only"

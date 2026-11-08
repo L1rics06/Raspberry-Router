@@ -2,7 +2,10 @@
 
 Agent 对具体硬件零感知：加设备 = 在配置里加一个 [[mcp.servers]]。
 """
+import asyncio
+import json
 import logging
+import os
 import re
 from contextlib import AsyncExitStack
 
@@ -15,6 +18,15 @@ log = logging.getLogger("piagent.mcp")
 # 而本项目工具契约是 <设备>.<动作>（如 fan.set），发给 LLM 前做名称净化，
 # 执行时再映射回真实 MCP 工具名。
 _LLM_INVALID = re.compile(r"[^a-zA-Z0-9_-]")
+
+
+class MCPCallError(RuntimeError):
+    """保留设备失败JSON，使HTTP和聊天得到一致失败状态"""
+
+    # __init__ 接收失败payload，保留原字段并生成JSON文本
+    def __init__(self, payload: dict):
+        self.payload = dict(payload, ok=False)
+        super().__init__(json.dumps(self.payload, ensure_ascii=False))
 
 
 def llm_tool_name(name: str) -> str:
@@ -33,8 +45,10 @@ class MCPPool:
 
     async def start(self) -> None:
         for cfg in self._cfgs:
+            env = dict(os.environ)
+            env.update(cfg.env or {})
             params = StdioServerParameters(
-                command=cfg.command, args=cfg.args, env=cfg.env or None)
+                command=cfg.command, args=cfg.args, env=env)
             read, write = await self._stack.enter_async_context(stdio_client(params))
             session = await self._stack.enter_async_context(ClientSession(read, write))
             await session.initialize()
@@ -44,8 +58,9 @@ class MCPPool:
                 # mcp SDK 2.x 字段为 input_schema，1.x 为 inputSchema
                 schema = getattr(t, "input_schema", None) or getattr(t, "inputSchema", None)
                 if t.name in self._tools:
-                    log.warning("工具重名 %s（%s 与先前 server 冲突，后者覆盖前者）",
-                                t.name, cfg.name)
+                    raise RuntimeError(f"MCP工具重名：{t.name}，请使用统一设备入口")
+                if llm_tool_name(t.name) in self._real_by_llm:
+                    raise RuntimeError(f"LLM净化后的工具名冲突：{t.name}")
                 self._tools[t.name] = {
                     "description": t.description or "",
                     "inputSchema": dict(schema) if schema
@@ -88,12 +103,25 @@ class MCPPool:
 
     # -------- 调用 --------
 
+    # call 调用一个工具，name为真实MCP名，args为已校验对象
+    # 同时检查协议isError和设备ok，超时后不重发动作
     async def call(self, name: str, args: dict) -> str:
         owner = self._owner.get(name)
         if owner is None:
-            return f"错误：工具 {name} 不存在"
+            raise MCPCallError({"ok": False, "error": "UNKNOWN_TOOL", "tool": name})
         session = self._sessions[owner]
-        result = await session.call_tool(name, args)
+        result = await asyncio.wait_for(session.call_tool(name, args), 15)
         parts = getattr(result, "content", None) or []
         texts = [c.text for c in parts if hasattr(c, "text")]
-        return "\n".join(texts) if texts else f"(无文本输出: {result})"
+        text = "\n".join(texts)
+        if getattr(result, "isError", False):
+            raise MCPCallError({"ok": False, "error": "MCP_PROTOCOL_ERROR", "detail": text})
+        try:
+            payload = json.loads(text)
+        except ValueError as error:
+            raise MCPCallError({"ok": False, "error": "INVALID_TOOL_RESULT", "detail": text[:300]}) from error
+        if not isinstance(payload, dict) or type(payload.get("ok")) is not bool:
+            raise MCPCallError({"ok": False, "error": "MISSING_BOOLEAN_OK"})
+        if payload["ok"] is False:
+            raise MCPCallError(payload)
+        return text

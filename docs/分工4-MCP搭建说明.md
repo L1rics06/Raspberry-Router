@@ -1,5 +1,8 @@
 # 分工4 交付说明：设备 MCP Server 的搭建、原理与功能
 
+> 2026-11-04 SG90更新：86项单元测试、50项本机闭环检查通过，前次两处验收缺口已修复；[当前上机步骤](01_使用步骤.md)、[交付与协作](09_最终交付与仓库集成.md)为最终执行依据。本文下方保留原五工具说明，真实GPIO/网关验收项不能由模拟结果代填。E2E凭证使用TASK4_ACCESS_TOKEN环境变量，不用用户名和密码。
+
+
 > 模块 D（硬件适配组）· 交付文档 v1.0 · 2026-11
 > 对应代码：`devices/device_mcp_server.py`、`devices/mcp_selftest.py`
 > 接口契约：`docs/接口文档/mcp_tools_schema.md`
@@ -417,9 +420,7 @@ A：会，所以它只用于软件联调，不能替代上板验收。我们的�
 
 ## 10. 局限与后续可以做的事
 
-1. **舵机**：Pi 5 上舵机 PWM 需要额外处理——`gpiozero.Servo` 依赖 pigpio，而 pigpio
-   对 Pi 5 支持有限，lgpio 后端也不直接提供舵机所需 PWM；可改用 `lgpio.tx_pwm` 软件
-   PWM 或外接 PWM 驱动板。建议作为进阶项，先把现有 5 个工具跑稳。
+1. **舵机**：已新增SG90 RP1硬件PWM、标定和light.set，见上机步骤；真实按压仍待现场测试。原五工具继续保留。
 2. **摄像头/OLED**：可新增 `camera.snap` / `oled.show` 工具，Server 结构已支持故障隔离。
 3. **Resources / Prompts**：目前只用了 Tools；以后可把设备日志做成 Resource，把常用场景
    做成 Prompt 模板。
@@ -442,7 +443,7 @@ agent/.venv/bin/python devices/mcp_selftest.py --gpio
 
 # 接入 Agent 后
 journalctl -u piagent-agent -f          # 看 MCP server 启动与工具上报
-python scripts/e2e_test.py <网关地址> <用户名> <密码>
+.venv/bin/python scripts/e2e_test.py --profile profiles/hardware.local.toml --base-url <网关地址> --device-id <设备ID> --actuate --chat
 ```
 
 ## 12. 参考资料

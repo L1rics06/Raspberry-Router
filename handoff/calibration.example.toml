@@ -1,0 +1,15 @@
+# SG90校准工具生成实测数据，0只是未填写占位，禁止据此驱动舵机
+servo_model = "SG90"
+servo_profile = "sg90_5v_v1"
+power_nominal_v = 5.0
+calibrated = false
+operator = ""
+tested_at = ""
+min_us = 0
+max_us = 0
+home_us = 1500
+on_us = 0
+off_us = 0
+wait_s = 0.4
+clearance_verified = false
+notes = "先确认普通单控开关的上下端含义；双控线路不能凭按键位置推断灯状态"

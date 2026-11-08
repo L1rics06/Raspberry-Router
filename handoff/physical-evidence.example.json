@@ -1,0 +1,17 @@
+{
+  "operator": "",
+  "tested_at": "",
+  "device_id": "CHANGE_ME_real_device_id",
+  "cycles_observed": 0,
+  "observations": {
+    "on_verified": false,
+    "off_verified": false,
+    "returned_home": false,
+    "no_reset": false,
+    "manual_switch_access": false,
+    "restart_safe": false,
+    "offline_error_clear": false
+  },
+  "attachments": [],
+  "notes": "填写相对于证据文件的真实视频或照片路径，不要用模拟报告替代实物证据"
+}

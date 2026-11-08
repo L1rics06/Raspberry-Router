@@ -1,0 +1,2 @@
+# 固定本机已验证版本，GPIO后端依赖由任务1和任务3另行交付
+-r requirements-lock.txt

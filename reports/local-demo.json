@@ -1,0 +1,478 @@
+{
+  "format_version": 1,
+  "kind": "local-demo",
+  "created_at": "2026-11-08T11:22:49+08:00",
+  "expected_mode": "sim",
+  "status": "SIMULATION_PASS",
+  "hardware_verified": false,
+  "checks": [
+    {
+      "name": "隔离演示数据库创建",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "本机网关启动",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "未登录请求被拒绝",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "旧入口关闭：register",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "旧入口关闭：login",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "真实Agent注册并上报工具",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "动作次数有效",
+      "status": "PASS",
+      "detail": 2
+    },
+    {
+      "name": "聊天动作已明确启用",
+      "status": "PASS",
+      "detail": "--chat需同时使用--actuate"
+    },
+    {
+      "name": "访问令牌登录成功",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "目标设备存在且在线",
+      "status": "PASS",
+      "detail": "task4-sim-257f9d58"
+    },
+    {
+      "name": "目标设备上报墙灯工具",
+      "status": "PASS",
+      "detail": [
+        "light.set",
+        "devices.status"
+      ]
+    },
+    {
+      "name": "状态响应内外层一致",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "ready": true,
+        "servo_model": "SG90",
+        "power_nominal_v": 5.0,
+        "calibrated": true,
+        "lamp_state": "unknown",
+        "fixture": true,
+        "gpio_bcm": 12,
+        "physical_pin": 32,
+        "channel": 0,
+        "frequency_hz": 50,
+        "command_count": 0,
+        "requested_on": null,
+        "last_command_us": null,
+        "trace": [],
+        "errors": {},
+        "calibration_errors": []
+      }
+    },
+    {
+      "name": "设备模式与验收目标一致",
+      "status": "PASS",
+      "detail": {
+        "expected": "sim",
+        "actual": "sim"
+      }
+    },
+    {
+      "name": "设备状态无错误",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "name": "设备已就绪",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "设备已完成机构标定",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "无反馈时不伪报灯状态",
+      "status": "PASS",
+      "detail": "unknown"
+    },
+    {
+      "name": "第1轮开灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": true,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "last_command_us": 1500,
+        "completed_at": "2026-11-08T11:22:50+08:00"
+      }
+    },
+    {
+      "name": "第1轮关灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": false,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "last_command_us": 1500,
+        "completed_at": "2026-11-08T11:22:50+08:00"
+      }
+    },
+    {
+      "name": "第2轮开灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": true,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "last_command_us": 1500,
+        "completed_at": "2026-11-08T11:22:50+08:00"
+      }
+    },
+    {
+      "name": "第2轮关灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": false,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "last_command_us": 1500,
+        "completed_at": "2026-11-08T11:22:50+08:00"
+      }
+    },
+    {
+      "name": "设备模式与验收目标一致",
+      "status": "PASS",
+      "detail": {
+        "expected": "sim",
+        "actual": "sim"
+      }
+    },
+    {
+      "name": "设备状态无错误",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "name": "设备已就绪",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "设备已完成机构标定",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "无反馈时不伪报灯状态",
+      "status": "PASS",
+      "detail": "unknown"
+    },
+    {
+      "name": "聊天前状态可核对：打开寝室灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "ready": true,
+        "servo_model": "SG90",
+        "power_nominal_v": 5.0,
+        "calibrated": true,
+        "lamp_state": "unknown",
+        "fixture": true,
+        "gpio_bcm": 12,
+        "physical_pin": 32,
+        "channel": 0,
+        "frequency_hz": 50,
+        "command_count": 4,
+        "requested_on": false,
+        "last_command_us": 1500,
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "errors": {},
+        "calibration_errors": []
+      }
+    },
+    {
+      "name": "聊天工具及方向：打开寝室灯",
+      "status": "PASS",
+      "detail": {
+        "type": "result",
+        "id": "c-4e5c13b1ba",
+        "ok": true,
+        "text": "模拟开关流程已完成，未检测真实灯光",
+        "actions": [
+          "light.set({\"on\": true})"
+        ]
+      }
+    },
+    {
+      "name": "聊天执行计数与目标：打开寝室灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "ready": true,
+        "servo_model": "SG90",
+        "power_nominal_v": 5.0,
+        "calibrated": true,
+        "lamp_state": "unknown",
+        "fixture": true,
+        "gpio_bcm": 12,
+        "physical_pin": 32,
+        "channel": 0,
+        "frequency_hz": 50,
+        "command_count": 5,
+        "requested_on": true,
+        "last_command_us": 1500,
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "errors": {},
+        "calibration_errors": []
+      }
+    },
+    {
+      "name": "设备模式与验收目标一致",
+      "status": "PASS",
+      "detail": {
+        "expected": "sim",
+        "actual": "sim"
+      }
+    },
+    {
+      "name": "设备状态无错误",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "name": "设备已就绪",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "设备已完成机构标定",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "无反馈时不伪报灯状态",
+      "status": "PASS",
+      "detail": "unknown"
+    },
+    {
+      "name": "聊天前状态可核对：关闭寝室灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "ready": true,
+        "servo_model": "SG90",
+        "power_nominal_v": 5.0,
+        "calibrated": true,
+        "lamp_state": "unknown",
+        "fixture": true,
+        "gpio_bcm": 12,
+        "physical_pin": 32,
+        "channel": 0,
+        "frequency_hz": 50,
+        "command_count": 5,
+        "requested_on": true,
+        "last_command_us": 1500,
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "errors": {},
+        "calibration_errors": []
+      }
+    },
+    {
+      "name": "聊天工具及方向：关闭寝室灯",
+      "status": "PASS",
+      "detail": {
+        "type": "result",
+        "id": "c-cf52f76254",
+        "ok": true,
+        "text": "模拟开关流程已完成，未检测真实灯光",
+        "actions": [
+          "light.set({\"on\": false})"
+        ]
+      }
+    },
+    {
+      "name": "聊天执行计数与目标：关闭寝室灯",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "ready": true,
+        "servo_model": "SG90",
+        "power_nominal_v": 5.0,
+        "calibrated": true,
+        "lamp_state": "unknown",
+        "fixture": true,
+        "gpio_bcm": 12,
+        "physical_pin": 32,
+        "channel": 0,
+        "frequency_hz": 50,
+        "command_count": 6,
+        "requested_on": false,
+        "last_command_us": 1500,
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "errors": {},
+        "calibration_errors": []
+      }
+    },
+    {
+      "name": "目标设备审计记录可查询",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "新版E2E命令可直接运行",
+      "status": "PASS",
+      "detail": "SIMULATION_PASS | {'PASS': 30, 'FAIL': 0, 'BLOCKED': 0}\n报告：/home/l1rics/Projects/python/Raspberry-Router/.runtime/demo-c922c36b9a75/e2e-report.json\n"
+    },
+    {
+      "name": "新版E2E核对聊天方向与设备执行",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "非法参数不执行动作",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "验收器能识别设备失败",
+      "status": "PASS",
+      "detail": "SIMULATED_DEVICE_FAILURE"
+    },
+    {
+      "name": "修复版Agent正确传播设备失败",
+      "status": "PASS",
+      "detail": {
+        "cmd_id": "c-614df4248f",
+        "status": "done",
+        "type": "result",
+        "id": "c-614df4248f",
+        "ok": false,
+        "text": "{\"ok\": false, \"mode\": \"sim\", \"requested_on\": true, \"lamp_state\": \"unknown\", \"error\": \"SIMULATED_DEVICE_FAILURE\"}",
+        "actions": [
+          "light.set({\"on\": true})"
+        ]
+      }
+    },
+    {
+      "name": "设备故障后聊天不伪报成功",
+      "status": "PASS",
+      "detail": {
+        "type": "result",
+        "id": "c-67670817d3",
+        "ok": false,
+        "text": "{\"ok\": false, \"mode\": \"sim\", \"requested_on\": true, \"lamp_state\": \"unknown\", \"error\": \"SIMULATED_DEVICE_FAILURE\"}",
+        "actions": [
+          "light.set({\"on\": true})"
+        ]
+      }
+    },
+    {
+      "name": "模拟设备不会被当作gpio",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "上游前端HTML可由网关提供",
+      "status": "PASS",
+      "detail": "未做真人浏览器或交互视觉验收"
+    },
+    {
+      "name": "设备离线状态可观察",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "离线控制返回503",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "Agent重启后重新上线",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "模拟设备重启后未自动执行开关",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "findings": [],
+  "scope": "本机真实网关、修复版Agent、正式墙灯控制算法的sim后端、规则模型夹具",
+  "agent_source": "agent",
+  "real_llm_verified": false,
+  "public_network_verified": false,
+  "upstream_commit": "f9c64f01b4d3d421e862b3acd75f90ac49a44684",
+  "device_id": "task4-sim-257f9d58",
+  "processes_stopped": true,
+  "counts": {
+    "PASS": 50,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

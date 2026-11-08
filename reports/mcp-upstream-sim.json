@@ -1,0 +1,92 @@
+{
+  "format_version": 1,
+  "kind": "mcp",
+  "created_at": "2026-11-08T11:22:43+08:00",
+  "expected_mode": "sim",
+  "status": "SIMULATION_PASS",
+  "hardware_verified": false,
+  "checks": [
+    {
+      "name": "MCP握手成功",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "目标工具齐全",
+      "status": "PASS",
+      "detail": {
+        "required": [
+          "devices.status",
+          "dht.read",
+          "fan.set",
+          "led.set",
+          "relay.set"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "name": "设备模式与验收目标一致",
+      "status": "PASS",
+      "detail": {
+        "expected": "sim",
+        "actual": "sim"
+      }
+    },
+    {
+      "name": "设备状态无错误",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "name": "本次未发送主动动作",
+      "status": "PASS",
+      "detail": "仅握手、工具清单和状态查询"
+    }
+  ],
+  "findings": [],
+  "profile": "/home/l1rics/Projects/python/Raspberry-Router/profiles/upstream-sim.toml",
+  "actuation_requested": false,
+  "cycles": 1,
+  "tools": [
+    "devices.status",
+    "dht.read",
+    "fan.set",
+    "led.set",
+    "relay.set"
+  ],
+  "device_status": {
+    "ok": true,
+    "led": false,
+    "fan": false,
+    "relay": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "mode": "sim",
+    "pins": {
+      "led_pin": 17,
+      "fan_pin": 27,
+      "relay_pins": [
+        5,
+        6,
+        13,
+        19
+      ],
+      "active_high": true,
+      "relay_active_high": true,
+      "dht_backend": "aht20",
+      "dht_bus": 1,
+      "dht_addr": "0x38"
+    },
+    "errors": {},
+    "ts": 1794108164.455
+  },
+  "counts": {
+    "PASS": 5,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

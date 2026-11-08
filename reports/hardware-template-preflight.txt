@@ -1,0 +1,2 @@
+BLOCKED | {'PASS': 4, 'FAIL': 0, 'BLOCKED': 4}
+报告：/home/l1rics/Projects/python/Raspberry-Router/reports/hardware-template-preflight.json

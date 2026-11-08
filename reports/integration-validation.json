@@ -1,0 +1,10 @@
+{
+  "upstream_commit": "f9c64f01b4d3d421e862b3acd75f90ac49a44684",
+  "base_text_files": 54,
+  "base_git_blobs_verified": true,
+  "integration_software_passed": true,
+  "patch_check_passed": true,
+  "patch_apply_files_identical": true,
+  "remote_modified": false,
+  "hardware_verified": false
+}

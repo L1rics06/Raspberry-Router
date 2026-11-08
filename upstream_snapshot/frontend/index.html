@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PiAgent · 智能设备管家</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<!-- ==================== 登录 / 注册 ==================== -->
+<div id="auth-view" class="auth-wrap hidden">
+  <div class="auth-card">
+    <div class="auth-logo">🤖</div>
+    <h1>PiAgent</h1>
+    <p class="auth-sub">基于树莓派的 AI Agent 物联网控制平台</p>
+    <form id="auth-form" autocomplete="off">
+      <label class="field">访问令牌
+        <input id="auth-token" required minlength="8" maxlength="128" placeholder="pat-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      </label>
+      <div id="auth-error" class="auth-error"></div>
+      <button class="btn primary block" id="auth-submit" type="submit">进入控制台</button>
+    </form>
+    <div class="auth-switch">令牌由服务端运维签发，仅限授权用户使用</div>
+  </div>
+  <p class="auth-foot">树莓派 Agent · VPS 网关 · MCP 设备工具</p>
+</div>
+
+<!-- ==================== 主界面 ==================== -->
+<div id="app-view" class="app hidden">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="logo">🤖</span><b>PiAgent</b></div>
+
+    <div class="side-label">我的设备 <span id="device-count" class="side-count"></span></div>
+    <div id="device-list" class="device-list"></div>
+    <button class="btn ghost block" id="btn-bind">＋ 绑定设备</button>
+
+    <div class="side-footer">
+      <div class="ws-row">
+        <span id="ws-dot" class="dot off"></span><span id="ws-state">未连接</span>
+      </div>
+      <div class="user-row">
+        <span class="avatar" id="user-avatar"></span><span id="user-name"></span>
+        <a href="#" id="btn-logout" class="logout">退出</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="dev-title">
+        <span id="dev-name">未选择设备</span>
+        <span id="dev-online" class="pill off">离线</span>
+        <span id="dev-telemetry" class="dev-telemetry"></span>
+      </div>
+      <nav class="tabs">
+        <span class="tab-indicator" aria-hidden="true"></span>
+        <button class="tab active" data-tab="chat">💬 对话</button>
+        <button class="tab" data-tab="manual">🎛 手动控制</button>
+        <button class="tab" data-tab="history">📜 历史</button>
+      </nav>
+    </header>
+
+    <!-- 对话 -->
+    <section id="tab-chat" class="tab-panel">
+      <div id="chat-box" class="chat-box">
+        <div class="chat-empty" id="chat-empty">
+          <div class="chat-empty-logo">🤖</div>
+          <p>我是你的设备管家，试试对我说：</p>
+          <div class="hint-row">
+            <span class="chip clickable" data-fill="把风扇打开">把风扇打开</span>
+            <span class="chip clickable" data-fill="舵机转到 90 度">舵机转到 90 度</span>
+            <span class="chip clickable" data-fill="寝室现在多少度？">寝室现在多少度？</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chat-input" placeholder="输入指令，回车发送…" maxlength="500" autocomplete="off">
+        <button class="btn primary" id="btn-send">发送</button>
+      </div>
+    </section>
+
+    <!-- 手动控制 -->
+    <section id="tab-manual" class="tab-panel hidden">
+      <p class="tab-note">绕过 Agent/大模型，直接调用设备上的 MCP 工具（高危工具需二次确认）</p>
+      <div id="manual-empty" class="empty-note hidden">设备不在线，无法手动控制</div>
+      <div id="manual-controls" class="manual-grid"></div>
+      <div id="manual-result" class="manual-result hidden"></div>
+    </section>
+
+    <!-- 历史 -->
+    <section id="tab-history" class="tab-panel hidden">
+      <div class="history-toolbar">
+        <button class="btn ghost" id="btn-history-refresh">⟳ 刷新</button>
+        <span id="history-count" class="muted"></span>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ==================== 弹窗：高危确认 ==================== -->
+<div id="modal-mask" class="modal-mask hidden">
+  <div class="modal">
+    <h3>⚠️ 高危操作确认</h3>
+    <p id="modal-text" class="modal-text"></p>
+    <div class="modal-btns">
+      <button class="btn ghost" id="modal-cancel">取消</button>
+      <button class="btn danger" id="modal-ok">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 弹窗：绑定设备 ==================== -->
+<div id="bind-mask" class="modal-mask hidden">
+  <div class="modal">
+    <h3>＋ 绑定设备</h3>
+    <p class="modal-text muted">设备 ID 与设备 token 由运维通过服务端 manage.py add-device 生成后线下交付</p>
+    <label class="field">设备 ID<input id="bind-id" placeholder="如 pi-live-01"></label>
+    <label class="field">设备 token<input id="bind-token" placeholder="dev-xxxxxxxx…"></label>
+    <div id="bind-error" class="auth-error"></div>
+    <div class="modal-btns">
+      <button class="btn ghost" id="bind-cancel">取消</button>
+      <button class="btn primary" id="bind-ok">绑定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<script src="static/app.js"></script>
+</body>
+</html>

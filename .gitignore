@@ -23,3 +23,16 @@ agent/config.toml
 
 # 早期 Rust 脚手架遗留
 /target
+
+# SG90私有运行数据
+.venv/
+.runtime/
+*.local.toml
+*.local.json
+__pycache__/
+*.pyc
+reports/private/
+*.log
+*.private.*
+private/
+evidence/

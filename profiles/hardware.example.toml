@@ -1,0 +1,27 @@
+# 复制为 hardware.local.toml 后填写，示例不能通过真机预检
+expected_mode = "gpio"
+timeout_s = 15
+agent_device_id = "CHANGE_ME_real_device_id"
+agent_device_token_env = "TASK4_DEVICE_TOKEN"
+
+[mcp]
+command = "{python}"
+args = ["{bundle}/devices/wall_light_mcp.py", "--gpio", "--config", "{bundle}/configs/servo.local.toml"]
+
+[mcp.env]
+PIAGENT_MCP_SIM = "0"
+
+[contract]
+kind = "wall_light"
+action_tool = "light.set"
+status_tool = "devices.status"
+
+[handoff]
+electrical = "../handoff/electrical.local.json"
+calibration = "../handoff/calibration.local.toml"
+
+[gateway]
+base_url = "http://CHANGE_ME/piagent"
+device_id = "CHANGE_ME_real_device_id"
+access_token_env = "TASK4_ACCESS_TOKEN"
+# access_token_file = "../private/access-token.txt"

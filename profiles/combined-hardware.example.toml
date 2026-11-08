@@ -1,0 +1,32 @@
+# 其他实体设备也已连接时使用，单舵机测试使用hardware.example.toml
+expected_mode = "gpio"
+timeout_s = 15
+agent_device_id = "CHANGE_ME_real_device_id"
+agent_device_token_env = "TASK4_DEVICE_TOKEN"
+
+[mcp]
+command = "{python}"
+args = ["{bundle}/devices/all_devices_mcp.py", "--gpio", "--config", "{bundle}/configs/servo.local.toml"]
+
+[mcp.env]
+PIAGENT_MCP_SIM = "0"
+GPIOZERO_PIN_FACTORY = "lgpio"
+
+[agent]
+allow_tools = ["light.set", "devices.status", "led.set", "fan.set", "relay.set", "dht.read"]
+confirm_tools = ["relay.set"]
+telemetry_tool = ""
+
+[contract]
+kind = "wall_light"
+action_tool = "light.set"
+status_tool = "devices.status"
+
+[handoff]
+electrical = "../handoff/electrical.local.json"
+calibration = "../handoff/calibration.local.toml"
+
+[gateway]
+base_url = "http://CHANGE_ME/piagent"
+device_id = "CHANGE_ME_real_device_id"
+access_token_env = "TASK4_ACCESS_TOKEN"

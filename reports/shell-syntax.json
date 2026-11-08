@@ -1,0 +1,38 @@
+[
+  {
+    "file": "run.ps1",
+    "passed": true
+  },
+  {
+    "file": "setup.ps1",
+    "passed": true
+  },
+  {
+    "file": "enable_pi5_pwm.sh",
+    "passed": true
+  },
+  {
+    "file": "prepare_pi5_pwm.sh",
+    "passed": true
+  },
+  {
+    "file": "run.sh",
+    "passed": true
+  },
+  {
+    "file": "service.sh",
+    "passed": true
+  },
+  {
+    "file": "servo.sh",
+    "passed": true
+  },
+  {
+    "file": "setup_pi.sh",
+    "passed": true
+  },
+  {
+    "file": "stop_pi5_pwm.sh",
+    "passed": true
+  }
+]

@@ -1,0 +1,21 @@
+# 上机时由servo命令复制成servo.local.toml，默认不允许墙灯动作
+servo_model = "SG90"
+servo_profile = "sg90_5v_v1"
+power_nominal_v = 5.0
+gpio_bcm = 12
+physical_pin = 32
+pwm_channel = 0
+frequency_hz = 50
+step_us = 10
+frame_s = 0.02
+min_us = 1400
+max_us = 1600
+home_us = 1500
+on_us = 0
+off_us = 0
+wait_s = 0.35
+calibrated = false
+clearance_verified = false
+switch_type = "unconfirmed"
+operator = ""
+tested_at = ""

@@ -1,0 +1,16 @@
+expected_mode = "sim"
+timeout_s = 15
+
+[mcp]
+command = "{python}"
+args = ["{bundle}/task4/mock_light.py"]
+
+[contract]
+kind = "wall_light"
+action_tool = "light.set"
+status_tool = "devices.status"
+
+[gateway]
+base_url = "http://127.0.0.1:8000"
+device_id = "task4-local-simulation"
+access_token_env = "TASK4_ACCESS_TOKEN"

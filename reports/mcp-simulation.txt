@@ -1,0 +1,2 @@
+SIMULATION_PASS | {'PASS': 12, 'FAIL': 0, 'BLOCKED': 0}
+报告：/home/l1rics/Projects/python/Raspberry-Router/reports/mcp-simulation.json

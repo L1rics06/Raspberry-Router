@@ -1,0 +1,25 @@
+# 仅供查看结构，实际部署由prepare-agent生成绝对路径
+# 私有配置通过PIAGENT_CONFIG读取，上游没有--config命令行选项
+[Unit]
+Description=PiAgent wall-light task4
+After=network-online.target maker-servo-pwm-prepare.service
+Wants=network-online.target
+Requires=maker-servo-pwm-prepare.service
+
+[Service]
+Type=simple
+User=CHANGE_ME
+WorkingDirectory=/CHANGE_ME/task4
+Environment="PYTHONPATH=/CHANGE_ME/task4/runtime_source/agent:/CHANGE_ME/task4"
+Environment="PYTHONUTF8=1"
+Environment="PIAGENT_CONFIG=/CHANGE_ME/task4/.runtime/generated/agent.private.toml"
+ExecStartPre=/CHANGE_ME/task4/.venv/bin/python -m task4.cli preflight --profile /CHANGE_ME/task4/profiles/hardware.local.toml
+ExecStart=/CHANGE_ME/task4/.venv/bin/python -m pi_agent
+ExecStopPost=/bin/bash /CHANGE_ME/task4/scripts/stop_pi5_pwm.sh
+Restart=on-failure
+RestartSec=3
+KillMode=control-group
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "kind": "upstream-audit",
+  "created_at": "2026-11-08T11:22:48+08:00",
+  "expected_mode": "gpio",
+  "status": "BLOCKED",
+  "hardware_verified": false,
+  "checks": [
+    {
+      "name": "快照与47个上游Git对象一致",
+      "status": "PASS",
+      "detail": {
+        "count": 47,
+        "mismatches": []
+      }
+    },
+    {
+      "name": "设备源码可解析",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "已有墙灯开关接口",
+      "status": "BLOCKED",
+      "detail": {
+        "required": "light.set",
+        "actual": [
+          "devices.status",
+          "dht.read",
+          "fan.set",
+          "led.set",
+          "relay.set"
+        ]
+      }
+    },
+    {
+      "name": "已有舵机接口",
+      "status": "BLOCKED",
+      "detail": "当前合并版本无舵机工具，不能据README认定完成"
+    },
+    {
+      "name": "完整交付包已有墙灯入口",
+      "status": "PASS",
+      "detail": "本包在独立目录补齐，上游固定快照保持原样"
+    }
+  ],
+  "findings": [
+    {
+      "id": "GPIO17_CONFLICT",
+      "status": "RESOLVED_IN_PACKAGE",
+      "detail": "完整包改用BCM12物理32脚硬件PWM，上游LED仍为BCM17，两者不再占同一脚"
+    }
+  ],
+  "upstream_commit": "f9c64f01b4d3d421e862b3acd75f90ac49a44684",
+  "tools_in_source": [
+    "devices.status",
+    "dht.read",
+    "fan.set",
+    "led.set",
+    "relay.set"
+  ],
+  "source_sha256": "fc339c466e72d89d19e0e8b00bde2f0f164ede29c250e6829c165fdb14b72502",
+  "live_github_checked_at": "2026-11-03",
+  "counts": {
+    "PASS": 3,
+    "FAIL": 0,
+    "BLOCKED": 2
+  }
+}

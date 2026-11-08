@@ -1,0 +1,5 @@
+# 设备 MCP Server 依赖（分工4）
+# 安装：python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+mcp>=1.2                 # MCP 官方 Python SDK（兼容 1.x / 2.x）
+gpiozero>=2.0            # Pi 5 兼容的 GPIO 库（lgpio 后端；不要用 RPi.GPIO）
+smbus2>=0.4              # I2C：AHT20 温湿度 / OLED（仿真模式不需要）

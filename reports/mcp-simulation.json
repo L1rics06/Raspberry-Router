@@ -1,0 +1,161 @@
+{
+  "format_version": 1,
+  "kind": "mcp",
+  "created_at": "2026-11-08T11:22:43+08:00",
+  "expected_mode": "sim",
+  "status": "SIMULATION_PASS",
+  "hardware_verified": false,
+  "checks": [
+    {
+      "name": "MCP握手成功",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "目标工具齐全",
+      "status": "PASS",
+      "detail": {
+        "required": [
+          "devices.status",
+          "light.set"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "name": "开关参数为必填布尔on",
+      "status": "PASS",
+      "detail": {
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on"
+        ],
+        "title": "light_setArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "设备模式与验收目标一致",
+      "status": "PASS",
+      "detail": {
+        "expected": "sim",
+        "actual": "sim"
+      }
+    },
+    {
+      "name": "设备状态无错误",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "name": "设备已就绪",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "设备已完成机构标定",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "无反馈时不伪报灯状态",
+      "status": "PASS",
+      "detail": "unknown"
+    },
+    {
+      "name": "第1轮开灯命令",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": true,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "detail": "仅模拟按压流程，没有真实GPIO动作"
+      }
+    },
+    {
+      "name": "第1轮关灯命令",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": false,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "detail": "仅模拟按压流程，没有真实GPIO动作"
+      }
+    },
+    {
+      "name": "第2轮开灯命令",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": true,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_on",
+          "home"
+        ],
+        "detail": "仅模拟按压流程，没有真实GPIO动作"
+      }
+    },
+    {
+      "name": "第2轮关灯命令",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "mode": "sim",
+        "requested_on": false,
+        "lamp_state": "unknown",
+        "trace": [
+          "home",
+          "press_off",
+          "home"
+        ],
+        "detail": "仅模拟按压流程，没有真实GPIO动作"
+      }
+    }
+  ],
+  "findings": [],
+  "profile": "/home/l1rics/Projects/python/Raspberry-Router/profiles/simulation.toml",
+  "actuation_requested": true,
+  "cycles": 2,
+  "tools": [
+    "devices.status",
+    "light.set"
+  ],
+  "device_status": {
+    "ok": true,
+    "mode": "sim",
+    "ready": true,
+    "calibrated": true,
+    "lamp_state": "unknown",
+    "errors": {},
+    "fixture": true,
+    "command_count": 0,
+    "requested_on": null,
+    "trace": []
+  },
+  "action_checks_completed": true,
+  "counts": {
+    "PASS": 12,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

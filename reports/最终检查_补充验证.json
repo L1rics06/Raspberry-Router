@@ -1,0 +1,45 @@
+{
+  "read_only_software_review": true,
+  "real_network_or_gpio_used": false,
+  "chat_validation": {
+    "scenario": "open and close chat both call on=false",
+    "incorrect_open_direction_accepted": true,
+    "chat_checks": [
+      {
+        "name": "聊天动作已明确启用",
+        "status": "PASS",
+        "detail": "--chat需同时使用--actuate"
+      },
+      {
+        "name": "聊天工具轨迹：打开寝室灯",
+        "status": "PASS",
+        "detail": {
+          "ok": true,
+          "actions": [
+            "light.set({\"on\": false})"
+          ],
+          "text": "fixture: both chats incorrectly close the light"
+        }
+      },
+      {
+        "name": "聊天工具轨迹：关闭寝室灯",
+        "status": "PASS",
+        "detail": {
+          "ok": true,
+          "actions": [
+            "light.set({\"on\": false})"
+          ],
+          "text": "fixture: both chats incorrectly close the light"
+        }
+      }
+    ]
+  },
+  "combined_status": {
+    "scenario": "existing LED backend reports an error",
+    "top_level_errors": {},
+    "nested_errors": {
+      "led": "fixture LED initialization failure"
+    },
+    "legacy_top_level_error_semantics_lost": true
+  }
+}

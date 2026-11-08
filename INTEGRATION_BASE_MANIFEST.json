@@ -1,0 +1,278 @@
+{
+  "repository": "https://github.com/L1rics06/Raspberry-Router",
+  "commit": "f9c64f01b4d3d421e862b3acd75f90ac49a44684",
+  "snapshot_date": "2026-11-03",
+  "scope": "上游54个文本文件的集成基线，保留原始Git对象，不含PDF与PPTX",
+  "files": [
+    {
+      "path": ".gitignore",
+      "blob": "a84a69a6e01dad4a49d9a9cc947198ee4939e85b",
+      "mode": "100644"
+    },
+    {
+      "path": "README.md",
+      "blob": "2dc6cbd0c269bbbba285df78cb0ba19edde18dd3",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/config.example.toml",
+      "blob": "d1ecb2c1394a1e58fb693d958d2e20465ce8df91",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/__init__.py",
+      "blob": "aa92c5e6ec1702cf7f19f15a7940b3d860b4b664",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/__main__.py",
+      "blob": "6470fbfe5d69d41729094bc67a16b0fe6d60db8f",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/agent_loop.py",
+      "blob": "6f0e25c8c915b345898d346015349db4ec0a9166",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/config.py",
+      "blob": "117ec3981b4b76fffc0640d0c11ef1a41484976e",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/llm.py",
+      "blob": "21df06e87b8b7a017bb904499b7dfff38c4c1391",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/mcp_client.py",
+      "blob": "e4339cd503959062fcb857a2474653917781fe04",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/mock_llm.py",
+      "blob": "13a748f90c9492048699cc77e441f26991f4af74",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/safety.py",
+      "blob": "2a1331c2345c1b73df131582791a31ec189b5985",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/pi_agent/ws_client.py",
+      "blob": "edf0186db5299ca3b98f3903848f1b08305abbb8",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/piagent-agent.service",
+      "blob": "eea8d45ad33c47e84b0271f72fd93e1397ac7f21",
+      "mode": "100644"
+    },
+    {
+      "path": "agent/requirements.txt",
+      "blob": "745d39f0ce140174a30efa02c714c103330ae542",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/README.md",
+      "blob": "8f7c77fcc6e9c65931022d8fdb39cf3658f11c7b",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/device_mcp_server.py",
+      "blob": "1763eb279b82e383241ae36c5afcae6727c73d9c",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/mcp_selftest.py",
+      "blob": "abe435a370d57f343cfe409d2b512323a6f8764d",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/mock_mcp_server.py",
+      "blob": "2e3e004ff4bd59a12375259e2f226a539b9055bc",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/requirements-device.txt",
+      "blob": "b3a70c1ca886665905ad80d30e75a515f27acc4b",
+      "mode": "100644"
+    },
+    {
+      "path": "devices/requirements.txt",
+      "blob": "6474ec252657ded6faa010cbe229b59e5803744f",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/接口文档/api_frontend.md",
+      "blob": "0e0c9681ef321adc53cdd5890ac8350b146922d8",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/接口文档/mcp_tools_schema.md",
+      "blob": "47ca6e3ed315400a1d0439d5098dbe51cbfc1428",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/接口文档/protocol_pi_vps.md",
+      "blob": "228d62b3a63eaf1538f9913de4bd09dec81edcf0",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/部署指南.md",
+      "blob": "d63bd443e5ee27a282e8ca47c8593efb7e24cc50",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/app.js",
+      "blob": "c6c030aad619e299b79479ba36354d03c851c720",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/index.html",
+      "blob": "c85499459059486f7af469cdb7a85b4dd29985f0",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/style.css",
+      "blob": "04083d4d70696ac78d7892db458ed41cb4c792fa",
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/e2e_test.py",
+      "blob": "51cd741450c511cc84b130652241117d06d3550d",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/__init__.py",
+      "blob": "e5e15940e4a2d419bd12cbe7d272ff45c8bfd95c",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/auth.py",
+      "blob": "c004d40a5c9b607997deece1bba2b1c11b718dde",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/config.py",
+      "blob": "7aff00947c1f618570f7e4ef2df892457e827ab7",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/db.py",
+      "blob": "73f0cab5c225d4d85a979330cb7233c8f1c52b09",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/llm_proxy.py",
+      "blob": "337b3edfe616f1c0145cb5f9d453622c6f0193f5",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/main.py",
+      "blob": "2452629c0690cf8ec19622b642c1d592e03ad0a2",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/routes_auth.py",
+      "blob": "36d0a1366a7068c87e41cd51f81a3c93a1e70753",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/routes_devices.py",
+      "blob": "2774425f45f14dad4be50a2eec5b7aa4e509c64c",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/state.py",
+      "blob": "32ff689e1e6e228f21f714ce23f2e92d8beb1420",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/ws_device.py",
+      "blob": "d9e705d77f4277b7dcb00e0e3aa75aef606926db",
+      "mode": "100644"
+    },
+    {
+      "path": "server/app/ws_user.py",
+      "blob": "32b2cef56c8de05a8195b6407d7b2660ae7c13b4",
+      "mode": "100644"
+    },
+    {
+      "path": "server/manage.py",
+      "blob": "57e04183ee41a24e9898b5fc786f852c4dfacc7e",
+      "mode": "100644"
+    },
+    {
+      "path": "server/piagent-server.service",
+      "blob": "28ec6af41543b467cc5be15fab8bc066c556a8d6",
+      "mode": "100644"
+    },
+    {
+      "path": "server/requirements.txt",
+      "blob": "fa1532579e7a439f4aca28553119a0638a467281",
+      "mode": "100644"
+    },
+    {
+      "path": "server/server.env.example",
+      "blob": "02421beca29f9ab11b986f19a958fb98cefeb565",
+      "mode": "100644"
+    },
+    {
+      "path": "server/static/app.js",
+      "blob": "c6c030aad619e299b79479ba36354d03c851c720",
+      "mode": "100644"
+    },
+    {
+      "path": "server/static/debug.html",
+      "blob": "8e0aa28f26ae9b42f2170f8c22f958686e24136c",
+      "mode": "100644"
+    },
+    {
+      "path": "server/static/index.html",
+      "blob": "c85499459059486f7af469cdb7a85b4dd29985f0",
+      "mode": "100644"
+    },
+    {
+      "path": "server/static/style.css",
+      "blob": "04083d4d70696ac78d7892db458ed41cb4c792fa",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/presentation.html",
+      "blob": "3fbe6788369094aeb247a21992a6ca6afb3e615f",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/project_intro.md",
+      "blob": "3381c6112a78b3d4e872cf2bca1d67168c0935a2",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/recode_2.md",
+      "blob": "627be60b69e041a7604892f74b8102dd2c841489",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/分工4-MCP搭建说明.md",
+      "blob": "c0453e6ac8a9d7ec19bedc7cbd64892438081878",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/分工4-工作成果汇总.md",
+      "blob": "9389acf67b5bf3d80ed89636b57e695ffdc97799",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/第一次会议.md",
+      "blob": "b97ac91c01ea9da718d09241bec803d6264bc63a",
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/sync_frontend.sh",
+      "blob": "e0d2ba2e09418f5ddbf4a990580c2629dcef7199",
+      "mode": "100755"
+    }
+  ]
+}

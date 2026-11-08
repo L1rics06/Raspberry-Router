@@ -1,0 +1,11 @@
+# 实际部署用Agent
+
+Agent代码源自SOURCE_MANIFEST.json记录的固定上游提交
+
+只修改pi_agent/mcp_client.py和pi_agent/agent_loop.py，修复设备失败、MCP协议错误与工具重名处理；变更文件指纹见AGENT_CHANGES.json，可合并补丁在integration_patches
+
+prepare-agent默认用这里的Agent生成服务，私有配置通过PIAGENT_CONFIG从.runtime/generated读取
+
+此目录中的config.example.toml和旧.service是随源文件保留的上游参考，不作为本包上机步骤；请使用交付包根目录的prepare-agent和scripts/service.sh
+
+上游原始版本另保存在upstream_snapshot中，二者作用不同，切勿用原Agent替换此运行版后继续宣称错误传播已修复

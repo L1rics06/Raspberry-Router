@@ -1,0 +1,16 @@
+{
+  "base_commit": "f9c64f01b4d3d421e862b3acd75f90ac49a44684",
+  "changed_files": [
+    {
+      "path": "agent/pi_agent/mcp_client.py",
+      "source": "runtime_source/agent/pi_agent/mcp_client.py",
+      "sha256": "d5505d2c8bdb9ca417eb2b726550701cdcc9d937a69b2b1854cbb4bec9666336"
+    },
+    {
+      "path": "agent/pi_agent/agent_loop.py",
+      "source": "runtime_source/agent/pi_agent/agent_loop.py",
+      "sha256": "cfb34bf4b386b3ffadc3d5ddaa833264e1a023f8a0020f9c8e2364b595141dd5"
+    }
+  ],
+  "purpose": "保留设备失败和MCP协议错误，聊天失败后立即停止"
+}

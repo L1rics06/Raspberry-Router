@@ -4,7 +4,7 @@
 > Agent 对硬件**零感知**：只认"工具清单"，加设备/换设备不改 Agent 代码。  
 > 正式实现：`devices/device_mcp_server.py`（真机 gpiozero + 无硬件自动仿真）；  
 > 参考 mock：`devices/mock_mcp_server.py`；自检：`devices/mcp_selftest.py`（32/32 通过）。  
-> 版本：v1.1 · 2026-11（v1.0 契约不变，仅补充实现与验收说明）
+> 版本：v1.2 · 2026-11-04，原五工具契约保留，SG90新增light.set，当前说明见第7节
 
 ## 1. 接入方式
 
@@ -64,7 +64,7 @@ Agent 与上层零改动；`mock_mcp_server.py` 仅保留作对照。
 
 | 事项         | 要求 / 现状                                                                   |
 | ---------- | ------------------------------------------------------------------------- |
-| GPIO 库     | 只用 `gpiozero`（Pi 5 兼容，lgpio 后端），**禁用 RPi.GPIO**                           |
+| GPIO 库     | 原数字外设用gpiozero/lgpio；SG90使用RP1硬件PWM sysfs，禁用旧RPi.GPIO方案                           |
 | I2C（AHT20） | `smbus2`，先 `raspi-config` 开 I2C；地址 0x38                                   |
 | 电平         | GPIO 坚持 3.3V；5V 信号（HC-SR04 Echo）分压；共地；**不碰 220V**                         |
 | 引脚         | 默认 LED=BCM17、风扇=BCM27、继电器=BCM5/6/13/19，可用环境变量覆盖                           |
@@ -101,3 +101,21 @@ args = ["/opt/piagent/devices/device_mcp_server.py"]
 | 联调         | 分工3 的 `MCPPool` 零改动列出并调用全部工具（已验证）                   |
 
 MCP 原理、实现细节与答辩说明见 `docs/分工4-MCP搭建说明.md`。
+
+## 7. SG90墙灯扩展契约与当前验收
+
+light.set(on:bool)按压指定开/关端后退回并停PWM，不暴露任意角度。只有完成普通单控翘板机构标定后才能执行；GPIO模式失败不会降级仿真。
+
+```json
+{"ok":true,"mode":"gpio","requested_on":true,"lamp_state":"unknown","trace":["home","press_on","home"]}
+```
+
+devices.status保留原有led/fan/relay/pins及顶层errors，同时新增舵机ready、calibrated、command_count、requested_on及other_devices_ready。合并错误时保留原有键，舵机重名错误加servo前缀；ready仅表示舵机。
+
+单墙灯入口提供light.set和devices.status；all_devices_mcp.py同时保留原五工具，共六个。只运行一个MCP入口，避免devices.status同名。
+
+Agent同时检查MCP协议isError和设备JSON的严格布尔ok。设备失败使直控外层ok=false；聊天在失败处终止，不自动重试按压。
+
+新版scripts/e2e_test.py从TASK4_ACCESS_TOKEN读取PAT，明确device_id，默认只读；--chat必须配--actuate。开/关聊天分别验证布尔方向、恰好一次动作及设备执行计数增加一次，不能只检查模型文字。
+
+软件验收已完成；原第5节的实际GPIO、前端控制和真机E2E仍须接线后验证。全部上机步骤见[SG90指南](../01_使用步骤.md)，协作见[分工接口](../02_与其他三人配合.md)。
